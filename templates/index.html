@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 35px 30px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            animation: fadeInDown 0.6s ease-out;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header h1 i {
+            font-size: 1.2em;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #a0a0b0;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .timestamp {
+            font-size: 0.95em;
+            color: #888;
+            font-style: italic;
+            letter-spacing: 0.3px;
+        }
+
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            margin-top: 15px;
+            font-size: 1.05em;
+            letter-spacing: 0.5px;
+            animation: scaleIn 0.5s ease-out;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-badge.free {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .status-badge.busy {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(244, 67, 54, 0.6);
+        }
+
+        .status-badge.unknown {
+            background: linear-gradient(135deg, #999 0%, #777 100%);
+            color: white;
+        }
+
+        /* Error Alert */
+        .error-alert {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.2) 0%, rgba(244, 67, 54, 0.1) 100%);
+            color: #ff9999;
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
+            border: 2px solid rgba(244, 67, 54, 0.5);
+            animation: shake 0.5s ease-out;
+            font-weight: 600;
+        }
+
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 45px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
+            padding: 30px;
+            backdrop-filter: blur(12px);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.6s ease-out backwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(6) { animation-delay: 0.6s; }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.13);
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0, 212, 255, 0.15);
+        }
+
+        .card-title {
+            font-size: 0.88em;
+            color: #a0b0c0;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title i {
+            font-size: 1.1em;
+            color: #00d4ff;
+        }
+
+        .card-value {
+            font-size: 2.8em;
+            font-weight: 800;
+            color: #00d4ff;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .card-subtext {
+            font-size: 0.95em;
+            color: #888;
+            font-weight: 500;
+        }
+
+        /* Status Card Special Styling */
+        .card.status-card {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .card.status-card .card-value {
+            font-size: 3.5em;
+            margin: 25px 0;
+        }
+
+        .card.status-card .card-title {
+            justify-content: center;
+            font-size: 1.1em;
+        }
+
+
+        /* Anomaly Alert */
+        .anomaly-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.1) 100%);
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+            text-align: center;
+            color: #ffd54f;
+            font-weight: 700;
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        /* History Section */
+        .history-section {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
+            padding: 35px;
+            backdrop-filter: blur(12px);
+            margin-top: 50px;
+            animation: fadeInUp 0.8s ease-out;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-section h2 {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 28px;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-section h2 i {
+            font-size: 1em;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-bottom: 40px;
+            background: rgba(0, 212, 255, 0.02);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            animation: fadeIn 0.8s ease-out 0.2s backwards;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table thead {
+            border-bottom: 2px solid rgba(0, 212, 255, 0.4);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 16px 14px;
+            color: #00d4ff;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            font-size: 0.95em;
+        }
+
+        .history-table td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .history-table tbody tr {
+            transition: all 0.3s ease;
+            animation: fadeInLeft 0.5s ease-out backwards;
+        }
+
+        .history-table tbody tr:nth-child(1) { animation-delay: 0s; }
+        .history-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+        .history-table tbody tr:nth-child(3) { animation-delay: 0.2s; }
+        .history-table tbody tr:nth-child(4) { animation-delay: 0.3s; }
+        .history-table tbody tr:nth-child(5) { animation-delay: 0.4s; }
+
+        .history-table tbody tr:hover {
+            background-color: rgba(0, 212, 255, 0.1);
+            transform: scale(1.01);
+        }
+
+        .status-free {
+            color: #4caf50;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-free::before {
+            content: '✓';
+            font-weight: bold;
+        }
+
+        .status-busy {
+            color: #f44336;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-busy::before {
+            content: '✕';
+            font-weight: bold;
+        }
+
+
+        /* No Data Message */
+        .no-data {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        /* Stat Box */
+        .stat-box {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 25px;
+        }
+
+        .stat-item {
+            flex: 1;
+            min-width: 160px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.12) 0%, rgba(0, 212, 255, 0.05) 100%);
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .stat-item:hover {
+            transform: scale(1.05);
+            border-color: rgba(0, 212, 255, 0.6);
+        }
+
+        .stat-item-label {
+            font-size: 0.86em;
+            color: #888;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-item-value {
+            font-size: 2em;
+            color: #00d4ff;
+            font-weight: 800;
+        }
+
+        /* Trend Badge */
+        .trend-badge {
+            display: inline-block;
+            padding: 7px 16px;
+            border-radius: 18px;
+            font-size: 0.92em;
+            font-weight: 700;
+            margin-top: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .trend-badge.increasing {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.3) 0%, rgba(244, 67, 54, 0.15) 100%);
+            color: #ff6b6b;
+            border: 1.5px solid #ff6b6b;
+        }
+
+        .trend-badge.decreasing {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(76, 175, 80, 0.15) 100%);
+            color: #4caf50;
+            border: 1.5px solid #4caf50;
+        }
+
+        .trend-badge.stable {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(0, 212, 255, 0.15) 100%);
+            color: #00d4ff;
+            border: 1.5px solid #00d4ff;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            color: #666;
+            font-size: 0.95em;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.8s ease-out 1s backwards;
+        }
+
+        .footer p {
+            margin-bottom: 12px;
+            line-height: 1.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .card-value {
+                font-size: 2em;
+            }
+
+            .card.status-card .card-value {
+                font-size: 2.5em;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .history-table {
+                font-size: 0.85em;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+
+            .history-section {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 25px 20px;
+                margin-bottom: 30px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.85;
+                transform: scale(1.01);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-10px);
+            }
+            75% {
+                transform: translateX(10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-parking"></i> Smart Parking Dashboard</h1>
+            <p><i class="fas fa-microchip"></i> IoT + AI + Cloud System</p>
+            {% if data.error %}
+                <p id="lastUpdated" class="timestamp"><i class="fas fa-exclamation-triangle"></i> Error: {{ data.error }}</p>
+            {% else %}
+                <p id="lastUpdated" class="timestamp"><i class="fas fa-clock"></i> Last Updated: {{ data.timestamp }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Error Alert -->
+        <div id="errorAlert" class="error-alert" style="display: {{ 'block' if data.error else 'none' }};">
+            <strong><i class="fas fa-times-circle"></i> System Error:</strong>
+            <span id="errorMessage">{{ data.error or '' }}</span>
+            <p style="margin-top: 10px; font-size: 0.9em;">Please check the backend or ThingSpeak connection.</p>
+        </div>
+
+        <!-- Main Cards -->
+        <div class="cards-grid">
+            <!-- Vehicle Count Card -->
+            {% if data.vehicle_count is not none %}
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-car"></i> Current Vehicles</div>
+                    <div id="vehicleCount" class="card-value">{{ data.vehicle_count }}</div>
+                    <div class="card-subtext">vehicles in lot</div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-car"></i> Current Vehicles</div>
+                    <div class="card-value">—</div>
+                    <div class="card-subtext">No data available</div>
+                </div>
+            {% endif %}
+
+            <!-- Average Count Card -->
+            {% if data.statistics and data.statistics.average is not none %}
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-chart-line"></i> Average Count</div>
+                    <div id="averageCount" class="card-value">{{ "%.1f"|format(data.statistics.average) }}</div>
+                    <div class="card-subtext">last 5 entries</div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-chart-line"></i> Average Count</div>
+                    <div class="card-value">—</div>
+                    <div class="card-subtext">No data available</div>
+                </div>
+            {% endif %}
+
+            <!-- Trend Card -->
+            {% if data.statistics and data.statistics.trend %}
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-chart-bar"></i> Trend</div>
+                    <div id="trendValue" class="card-value" style="font-size: 2em;">
+                        {% if data.statistics.trend == 'increasing' %}
+                            <i class="fas fa-arrow-up" style="color: #ff6b6b;"></i> Increasing
+                        {% elif data.statistics.trend == 'decreasing' %}
+                            <i class="fas fa-arrow-down" style="color: #4caf50;"></i> Decreasing
+                        {% else %}
+                            <i class="fas fa-minus" style="color: #00d4ff;"></i> Stable
+                        {% endif %}
+                    </div>
+                    <div id="trendBadge" class="trend-badge {{ data.statistics.trend }}">
+                        {{ data.statistics.trend|capitalize }}
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-chart-bar"></i> Trend</div>
+                    <div class="card-value">—</div>
+                    <div class="card-subtext">No data available</div>
+                </div>
+            {% endif %}
+
+            <!-- Status Card (Full Width) -->
+            <div class="card status-card">
+                <div class="card-title"><i class="fas fa-square-parking"></i> Parking Status</div>
+                {% if data.status %}
+                    <div id="statusValue" class="card-value">{{ data.status }}</div>
+                    <div id="statusBadge" class="status-badge {% if data.status == 'FREE' %}free{% elif data.status == 'BUSY' %}busy{% else %}unknown{% endif %}">
+                        {% if data.status == 'FREE' %}
+                            <i class="fas fa-check-circle"></i> PARKING AVAILABLE
+                        {% elif data.status == 'BUSY' %}
+                            <i class="fas fa-ban"></i> PARKING FULL
+                        {% else %}
+                            <i class="fas fa-question-circle"></i> STATUS UNKNOWN
+                        {% endif %}
+                    </div>
+                    <div id="anomalyWarning" class="anomaly-warning" style="display: {{ 'block' if data.anomaly else 'none' }};">
+                        <i class="fas fa-exclamation-triangle"></i> ANOMALY DETECTED - Vehicle count exceeds safe threshold!
+                    </div>
+                {% else %}
+                    <div class="card-value">—</div>
+                    <div class="card-subtext">No status data available</div>
+                {% endif %}
+            </div>
+
+            <!-- Min/Max Stats -->
+            {% if data.statistics and (data.statistics.min is not none or data.statistics.max is not none) %}
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-arrow-alt-down"></i> Min Count</div>
+                    <div id="minCount" class="card-value">{{ data.statistics.min if data.statistics.min is not none else '—' }}</div>
+                    <div class="card-subtext">minimum in history</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-arrow-alt-up"></i> Max Count</div>
+                    <div id="maxCount" class="card-value">{{ data.statistics.max if data.statistics.max is not none else '—' }}</div>
+                    <div class="card-subtext">maximum in history</div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- History Section with Chart -->
+        {% if data.history and data.history|length > 0 %}
+            <div class="history-section">
+                <h2><i class="fas fa-chart-area"></i> Vehicle History</h2>
+                
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="vehicleChart"></canvas>
+                </div>
+
+                <h2 style="margin-top: 35px; margin-bottom: 20px;"><i class="fas fa-list"></i> Last 5 Entries</h2>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> Entry ID</th>
+                            <th><i class="fas fa-clock"></i> Timestamp</th>
+                            <th><i class="fas fa-car"></i> Vehicles</th>
+                            <th><i class="fas fa-info-circle"></i> Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        {% for entry in data.history %}
+                            <tr>
+                                <td>#{{ entry.entry_id }}</td>
+                                <td>{{ entry.created_at }}</td>
+                                <td>{{ entry.vehicle_count }}</td>
+                                <td>
+                                    {% if entry.ai_decision == 1 %}
+                                        <span class="status-busy">BUSY</span>
+                                    {% else %}
+                                        <span class="status-free">FREE</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="history-section">
+                <div class="no-data">
+                    <i class="fas fa-inbox"></i> No historical data available yet
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                <i class="fas fa-sync"></i> Dashboard auto-refreshes every 5 seconds | 
+                <i class="fas fa-satellite"></i> Data from ThingSpeak | 
+                <i class="fas fa-robot"></i> AI powered by Groq LLM
+            </p>
+            <p style="margin-top: 10px; color: #555;">
+                Smart Parking System v2.0 | Enhanced Dashboard with Real-time Analytics
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let vehicleChart = null;
+
+        function formatTrendText(trend) {
+            switch (trend) {
+                case 'increasing':
+                    return '<i class="fas fa-arrow-up" style="color: #ff6b6b;"></i> Increasing';
+                case 'decreasing':
+                    return '<i class="fas fa-arrow-down" style="color: #4caf50;"></i> Decreasing';
+                default:
+                    return '<i class="fas fa-minus" style="color: #00d4ff;"></i> Stable';
+            }
+        }
+
+        function formatTrendBadge(trend) {
+            switch (trend) {
+                case 'increasing':
+                    return { text: 'Increasing', className: 'trend-badge increasing' };
+                case 'decreasing':
+                    return { text: 'Decreasing', className: 'trend-badge decreasing' };
+                default:
+                    return { text: 'Stable', className: 'trend-badge stable' };
+            }
+        }
+
+        function getStatusBadge(value) {
+            switch (value) {
+                case 'FREE':
+                    return {
+                        html: '<i class="fas fa-check-circle"></i> PARKING AVAILABLE',
+                        className: 'status-badge free'
+                    };
+                case 'BUSY':
+                    return {
+                        html: '<i class="fas fa-ban"></i> PARKING FULL',
+                        className: 'status-badge busy'
+                    };
+                default:
+                    return {
+                        html: '<i class="fas fa-question-circle"></i> STATUS UNKNOWN',
+                        className: 'status-badge unknown'
+                    };
+            }
+        }
+
+        function renderHistoryRows(history) {
+            if (!history || history.length === 0) {
+                return '<tr><td colspan="4" style="text-align:center; color:#888; padding:20px;">No historical data available yet</td></tr>';
+            }
+            return history.slice().reverse().map(entry => {
+                const statusClass = entry.ai_decision === 1 ? 'status-busy' : 'status-free';
+                const statusText = entry.ai_decision === 1 ? 'BUSY' : 'FREE';
+                return `
+                    <tr>
+                        <td>#${entry.entry_id}</td>
+                        <td>${entry.created_at}</td>
+                        <td>${entry.vehicle_count}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getChartLabels(history) {
+            return history.map(entry => {
+                const parts = entry.created_at.split(' ');
+                return parts[1] || entry.created_at;
+            }).reverse();
+        }
+
+        function getChartData(history) {
+            return history.map(entry => entry.vehicle_count).reverse();
+        }
+
+        function initChart(historyData) {
+            const ctx = document.getElementById('vehicleChart');
+            if (!ctx) return null;
+
+            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(0, 212, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 212, 255, 0.01)');
+
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: getChartLabels(historyData),
+                    datasets: [{
+                        label: 'Vehicle Count',
+                        data: getChartData(historyData),
+                        borderColor: '#00d4ff',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#00d4ff',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        tension: 0.4,
+                        fill: true,
+                        animation: {
+                            duration: 900,
+                            easing: 'easeInOutQuart'
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#e0e0e0',
+                                font: {
+                                    size: 13,
+                                    weight: 'bold',
+                                    family: "'Inter', sans-serif"
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#00d4ff',
+                            bodyColor: '#e0e0e0',
+                            borderColor: '#00d4ff',
+                            borderWidth: 1,
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            cornerRadius: 8,
+                            caretSize: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.08)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#888',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            min: 0
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#888',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(historyData) {
+            if (!vehicleChart) return;
+            vehicleChart.data.labels = getChartLabels(historyData);
+            vehicleChart.data.datasets[0].data = getChartData(historyData);
+            vehicleChart.update({ duration: 600, easing: 'easeOutQuart' });
+        }
+
+        function updateDashboard(data) {
+            const lastUpdated = document.getElementById('lastUpdated');
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            const vehicleCount = document.getElementById('vehicleCount');
+            const averageCount = document.getElementById('averageCount');
+            const trendValue = document.getElementById('trendValue');
+            const trendBadge = document.getElementById('trendBadge');
+            const statusValue = document.getElementById('statusValue');
+            const statusBadge = document.getElementById('statusBadge');
+            const anomalyWarning = document.getElementById('anomalyWarning');
+            const minCount = document.getElementById('minCount');
+            const maxCount = document.getElementById('maxCount');
+            const historyBody = document.getElementById('historyBody');
+
+            if (lastUpdated) {
+                lastUpdated.innerHTML = data.error
+                    ? `<i class="fas fa-exclamation-triangle"></i> ${data.error}`
+                    : `<i class="fas fa-clock"></i> Last Updated: ${data.timestamp}`;
+            }
+
+            if (errorAlert) {
+                errorAlert.style.display = data.error ? 'block' : 'none';
+            }
+            if (errorMessage) {
+                errorMessage.textContent = data.error || '';
+            }
+
+            if (vehicleCount) {
+                vehicleCount.textContent = data.vehicle_count != null ? data.vehicle_count : '—';
+            }
+            if (averageCount) {
+                averageCount.textContent = data.statistics && Number.isFinite(data.statistics.average)
+                    ? data.statistics.average.toFixed(1)
+                    : '—';
+            }
+
+            if (trendValue && trendBadge) {
+                const trend = data.statistics && data.statistics.trend ? data.statistics.trend : 'stable';
+                trendValue.innerHTML = formatTrendText(trend);
+                const badge = formatTrendBadge(trend);
+                trendBadge.textContent = badge.text;
+                trendBadge.className = badge.className;
+            }
+
+            if (statusValue && statusBadge) {
+                statusValue.textContent = data.status || '—';
+                const badge = getStatusBadge(data.status);
+                statusBadge.className = badge.className;
+                statusBadge.innerHTML = badge.html;
+            }
+
+            if (anomalyWarning) {
+                anomalyWarning.style.display = data.anomaly ? 'block' : 'none';
+            }
+
+            if (minCount) {
+                minCount.textContent = data.statistics && Number.isFinite(data.statistics.min)
+                    ? data.statistics.min
+                    : '—';
+            }
+            if (maxCount) {
+                maxCount.textContent = data.statistics && Number.isFinite(data.statistics.max)
+                    ? data.statistics.max
+                    : '—';
+            }
+
+            if (historyBody) {
+                historyBody.innerHTML = renderHistoryRows(data.history);
+            }
+
+            if (vehicleChart) {
+                updateChart(data.history || []);
+            }
+        }
+
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Unable to refresh dashboard data:', error);
+                const lastUpdated = document.getElementById('lastUpdated');
+                if (lastUpdated) {
+                    lastUpdated.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Update failed`;
+                }
+                const errorAlert = document.getElementById('errorAlert');
+                const errorMessage = document.getElementById('errorMessage');
+                if (errorAlert) {
+                    errorAlert.style.display = 'block';
+                }
+                if (errorMessage) {
+                    errorMessage.textContent = error.message || 'Could not update data.';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const initialHistory = {{ data.history|tojson }} || [];
+            vehicleChart = initChart(initialHistory);
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s cubic-bezier(0.23, 1, 0.320, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            const cardValues = document.querySelectorAll('.card-value');
+            cardValues.forEach(value => {
+                value.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.320, 1)';
+            });
+
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.01)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            setInterval(fetchDashboardData, 5000);
+        });
+
+        console.log('🎨 Enhanced Dashboard loaded at:', new Date().toLocaleTimeString());
+    </script>
+</body>
+</html>
