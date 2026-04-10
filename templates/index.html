@@ -693,6 +693,7 @@
                 <table class="history-table">
                     <thead>
                         <tr>
+                            <th><i class="fas fa-list-ol"></i> #</th>
                             <th><i class="fas fa-hashtag"></i> Entry ID</th>
                             <th><i class="fas fa-clock"></i> Timestamp</th>
                             <th><i class="fas fa-car"></i> Vehicles</th>
@@ -702,7 +703,8 @@
                     <tbody id="historyBody">
                         {% for entry in data.history %}
                             <tr>
-                                <td>#{{ entry.entry_id }}</td>
+                                <td>{{ entry.serial_number }}</td>
+                                <td title="{{ entry.entry_id }}">#{{ entry.display_entry_id }}</td>
                                 <td>{{ entry.created_at }}</td>
                                 <td>{{ entry.vehicle_count }}</td>
                                 <td>
@@ -785,14 +787,15 @@
 
         function renderHistoryRows(history) {
             if (!history || history.length === 0) {
-                return '<tr><td colspan="4" style="text-align:center; color:#888; padding:20px;">No historical data available yet</td></tr>';
+                return '<tr><td colspan="5" style="text-align:center; color:#888; padding:20px;">No historical data available yet</td></tr>';
             }
-            return history.slice().reverse().map(entry => {
+            return history.slice().reverse().map((entry, index) => {
                 const statusClass = entry.ai_decision === 1 ? 'status-busy' : 'status-free';
                 const statusText = entry.ai_decision === 1 ? 'BUSY' : 'FREE';
                 return `
                     <tr>
-                        <td>#${entry.entry_id}</td>
+                        <td>${entry.serial_number}</td>
+                        <td title="${entry.entry_id}">#${entry.display_entry_id}</td>
                         <td>${entry.created_at}</td>
                         <td>${entry.vehicle_count}</td>
                         <td><span class="${statusClass}">${statusText}</span></td>

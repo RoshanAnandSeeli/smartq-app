@@ -1,6 +1,7 @@
 import os
 import logging
 import requests
+import hashlib
 from datetime import datetime
 from flask import Flask, jsonify, render_template
 from dotenv import load_dotenv
@@ -105,8 +106,20 @@ class DataValidator:
             vehicle_count = DataValidator.validate_vehicle_count(feed.get("field3"))
             ai_decision = DataValidator.validate_ai_decision(feed.get("field4"))
             
+            # Hash the entry_id for blockchain-like security
+            entry_id = feed.get("entry_id")
+            if entry_id:
+                hashed_entry_id = hashlib.sha256(str(entry_id).encode()).hexdigest()
+                # Create display version: first 2 chars + ... + last 2 chars
+                display_entry_id = f"{hashed_entry_id[:2]}...{hashed_entry_id[-2:]}"
+            else:
+                hashed_entry_id = None
+                display_entry_id = None
+            
             return {
-                "entry_id":      feed.get("entry_id"),
+                "entry_id":      hashed_entry_id,
+                "display_entry_id": display_entry_id,
+                "serial_number": entry_id,  # Original ThingSpeak entry ID for display
                 "created_at":    format_timestamp(feed.get("created_at")),
                 "vehicle_count": vehicle_count,
                 "ai_decision":   ai_decision,

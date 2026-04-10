@@ -83,7 +83,9 @@ Returns current parking status and statistics.
   "anomaly_threshold": 20,
   "history": [
     {
-      "entry_id": 12345,
+      "entry_id": "811786ad1ae74adfdd20dd0372abaaebc6246e343aebd01da0bfc4c02bf0106c",
+      "display_entry_id": "81...6c",
+      "serial_number": 12345,
       "created_at": "2026-04-09T10:30:30Z",
       "vehicle_count": 10,
       "ai_decision": 0,

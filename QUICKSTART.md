@@ -151,7 +151,9 @@ Typical response from ThingSpeak:
   "anomaly": false,
   "history": [
     {
-      "entry_id": 35,
+      "entry_id": "811786ad1ae74adfdd20dd0372abaaebc6246e343aebd01da0bfc4c02bf0106c",
+      "display_entry_id": "81...6c",
+      "serial_number": 35,
       "created_at": "2026-04-09T17:16:40Z",
       "vehicle_count": 15,
       "ai_decision": 0
