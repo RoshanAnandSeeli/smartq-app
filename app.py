@@ -361,8 +361,13 @@ def status():
 
     current_satisfaction = state["user_satisfaction_scores"].get(str(state["current_serving"]), 8)
     user_satisfaction = state["user_satisfaction_scores"].get(str(user_token), 8)
-    has_queue = state["last_token_issued"] > state["current_serving"]
-    elapsed = round(time.time() - state["last_click_time"], 1) if (state["last_click_time"] and has_queue) else None
+    # Keep elapsed timer active while the current serving token is a real customer.
+    has_active_customer = (
+        state["last_click_time"] is not None
+        and str(state["current_serving"]) in state["users"]
+        and state["current_serving"] <= state["last_token_issued"]
+    )
+    elapsed = round(time.time() - state["last_click_time"], 1) if has_active_customer else None
 
     return jsonify({
         "current": state["current_serving"],

@@ -358,50 +358,91 @@
     // --- COUNTDOWN TIMER ---
     let timerInterval = null;
     let avgSeconds = 300;
-    let lastServingToken = null; // reset signal: changes when next customer is called
+    let lastServingToken = null;
+    let timerSync = {
+        active: false,
+        totalSecs: 300,
+        elapsedAtSync: 0,
+        syncedAtMs: 0
+    };
 
-    function startCountdown(totalSecs, elapsedSecs) {
-        clearInterval(timerInterval);
+    function renderTimerFromSync() {
         const circumference = 213.6;
         const arc = document.getElementById('timer-arc');
         const display = document.getElementById('timer-display');
         const subtext = document.getElementById('timer-subtext');
         const heading = document.getElementById('timer-heading');
-        heading.textContent = 'Time at Counter';
-        display.classList.remove('timer-urgent');
 
-        let secs = Math.max(0, Math.round(totalSecs - elapsedSecs));
-
-        function tick() {
-            display.textContent = secs > 0 ? secs : '0';
-            arc.style.strokeDashoffset = circumference * (1 - secs / totalSecs);
-            if (secs <= 0) {
-                arc.style.stroke = 'var(--danger)';
-                heading.textContent = 'Time Exceeded';
-                subtext.textContent = 'Auto-advance imminent...';
-                display.classList.add('timer-urgent');
-                clearInterval(timerInterval);
-            } else if (secs <= totalSecs * 0.25) {
-                arc.style.stroke = 'var(--danger)';
-                subtext.textContent = '⚠️ Wrapping up soon!';
-                display.classList.add('timer-urgent');
-            } else if (secs <= totalSecs * 0.5) {
-                arc.style.stroke = 'var(--warn)';
-                subtext.textContent = 'Halfway through service time.';
-                display.classList.remove('timer-urgent');
-            } else {
-                arc.style.stroke = 'var(--primary)';
-                subtext.textContent = 'Service in progress.';
-                display.classList.remove('timer-urgent');
-            }
-            secs--;
+        if (!timerSync.active) {
+            resetTimerDisplay();
+            return;
         }
-        tick();
-        timerInterval = setInterval(tick, 1000);
+
+        const elapsedNow = timerSync.elapsedAtSync + ((Date.now() - timerSync.syncedAtMs) / 1000);
+        const remaining = Math.max(0, Math.round(timerSync.totalSecs - elapsedNow));
+        const progress = timerSync.totalSecs > 0 ? (remaining / timerSync.totalSecs) : 0;
+
+        display.textContent = String(remaining);
+        arc.style.strokeDashoffset = String(circumference * (1 - progress));
+
+        if (remaining <= 0) {
+            arc.style.stroke = 'var(--danger)';
+            heading.textContent = 'Time Exceeded';
+            subtext.textContent = 'Auto-advance imminent...';
+            display.classList.add('timer-urgent');
+        } else if (remaining <= timerSync.totalSecs * 0.25) {
+            arc.style.stroke = 'var(--danger)';
+            heading.textContent = 'Time at Counter';
+            subtext.textContent = 'Wrapping up soon.';
+            display.classList.add('timer-urgent');
+        } else if (remaining <= timerSync.totalSecs * 0.5) {
+            arc.style.stroke = 'var(--warn)';
+            heading.textContent = 'Time at Counter';
+            subtext.textContent = 'Halfway through service time.';
+            display.classList.remove('timer-urgent');
+        } else {
+            arc.style.stroke = 'var(--primary)';
+            heading.textContent = 'Time at Counter';
+            subtext.textContent = 'Service in progress.';
+            display.classList.remove('timer-urgent');
+        }
+    }
+
+    function ensureTimerTicker() {
+        if (timerInterval) return;
+        timerInterval = setInterval(() => {
+            renderTimerFromSync();
+        }, 1000);
+    }
+
+    function syncTimerFromStatus(totalSecs, elapsedSecs, servingToken) {
+        if (elapsedSecs === null || elapsedSecs === undefined) {
+            timerSync.active = false;
+            lastServingToken = null;
+            renderTimerFromSync();
+            return;
+        }
+
+        const safeTotal = Math.max(1, Math.round(Number(totalSecs) || 1));
+        const safeElapsed = Math.max(0, Number(elapsedSecs) || 0);
+
+        const predictedElapsed = timerSync.elapsedAtSync + ((Date.now() - timerSync.syncedAtMs) / 1000);
+        const timerDrifted = !timerSync.active || Math.abs(predictedElapsed - safeElapsed) > 4 || Math.abs(timerSync.totalSecs - safeTotal) > 1;
+        const servingChanged = servingToken !== lastServingToken;
+
+        if (timerDrifted || servingChanged) {
+            timerSync.active = true;
+            timerSync.totalSecs = safeTotal;
+            timerSync.elapsedAtSync = safeElapsed;
+            timerSync.syncedAtMs = Date.now();
+            lastServingToken = servingToken;
+        }
+
+        ensureTimerTicker();
+        renderTimerFromSync();
     }
 
     function resetTimerDisplay() {
-        clearInterval(timerInterval);
         document.getElementById('timer-display').textContent = '--';
         document.getElementById('timer-display').classList.remove('timer-urgent');
         document.getElementById('timer-heading').textContent = 'Time at Counter';
@@ -411,6 +452,10 @@
     }
 
     async function adjustAvg(deltaSecs) {
+        const timerText = document.getElementById('timer-display').textContent;
+        const remainingBefore = Number.isFinite(parseInt(timerText, 10)) ? parseInt(timerText, 10) : null;
+        const previousAvg = Math.max(1, Math.round(avgSeconds));
+
         const res = await fetch('/api/adjust_avg', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ delta: deltaSecs })
@@ -418,9 +463,14 @@
         const data = await res.json();
         avgSeconds = data.avg_seconds;
         document.getElementById('avg-label').textContent = Math.round(avgSeconds) + ' s/person';
-        // Restart countdown with new total but same elapsed
-        const elapsed = avgSeconds - parseFloat(document.getElementById('timer-display').textContent || avgSeconds);
-        startCountdown(Math.round(avgSeconds), Math.max(0, elapsed));
+
+        if (timerSync.active && remainingBefore !== null) {
+            const prevElapsed = Math.max(0, previousAvg - remainingBefore);
+            timerSync.totalSecs = Math.max(1, Math.round(avgSeconds));
+            timerSync.elapsedAtSync = prevElapsed;
+            timerSync.syncedAtMs = Date.now();
+            renderTimerFromSync();
+        }
         updateQueueList(); // cascade ETA update
     }
 
@@ -434,18 +484,7 @@
         avgSeconds = data.avg_seconds;
         document.getElementById('avg-label').textContent = Math.round(avgSeconds) + ' s/person';
 
-        // Use serving_token as reset signal — changes every time next is called
-        if (data.elapsed_seconds !== null && data.elapsed_seconds !== undefined) {
-            if (data.serving_token !== lastServingToken) {
-                lastServingToken = data.serving_token;
-                startCountdown(Math.round(avgSeconds), Math.round(data.elapsed_seconds));
-            }
-        } else {
-            if (lastServingToken !== null) {
-                lastServingToken = null;
-                resetTimerDisplay();
-            }
-        }
+        syncTimerFromStatus(data.avg_seconds, data.elapsed_seconds, data.serving_token);
 
         const rage = data.current_satisfaction || 8;
         const bar = document.getElementById('rage-bar');
@@ -659,7 +698,17 @@
         </div></td></tr>`;
     }
 
-    function refresh() { updateAdminStatus(); updateQueueList(); }
+    let refreshInFlight = false;
+    async function refresh() {
+        if (refreshInFlight) return;
+        refreshInFlight = true;
+        try {
+            await Promise.all([updateAdminStatus(), updateQueueList()]);
+        } finally {
+            refreshInFlight = false;
+        }
+    }
+    ensureTimerTicker();
     setInterval(refresh, 3000);
     refresh();
 </script>
