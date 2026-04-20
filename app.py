@@ -164,7 +164,13 @@ def notify_turn(state):
     token = state["current_serving"]
     for from_number, link in list(whatsapp_sessions.items()):
         if link.get("queue_id") == state["queue_id"] and int(link.get("token", 0)) == token:
-            send_whatsapp_message(from_number, "It is your turn now. Please proceed to the counter.")
+            name = state["users"].get(str(token), "there")
+            send_whatsapp_message(
+                from_number,
+                f"It is your turn now, {name}. Please proceed to the counter. Your WhatsApp session is now closed."
+            )
+            # Auto-close local chat linkage once the customer is called.
+            del whatsapp_sessions[from_number]
 
 
 def get_goodbye_message(name):
@@ -567,14 +573,26 @@ def twilio_whatsapp():
         if len(parts) < 3:
             response.message("Usage: link <QUEUE_ID> <TOKEN>")
             return twiml_reply()
-        queue_id = parts[1].upper().strip()
+        queue_ref = parts[1].strip()
         token = parts[2].strip()
+        queue_id = queue_ref.upper()
+
+        # Allow selecting queue by serial number in direct link mode too.
+        if queue_ref.isdigit():
+            queues = available_queue_ids()
+            idx = int(queue_ref)
+            if 1 <= idx <= len(queues):
+                queue_id = queues[idx - 1]
+
         _, state = find_state_by_queue_id(queue_id)
         if not state or token not in state["users"]:
             response.message("Invalid queue id or token.")
             return twiml_reply()
         whatsapp_sessions[from_number] = {"queue_id": queue_id, "token": int(token)}
-        response.message("Linked. Send 'status' for queue position or 'ai <message>' to chat.")
+        name = state["users"].get(token, "there")
+        response.message(
+            f"Linked successfully. Welcome, {name}! Send 'status' for queue position or 'ai <message>' to chat."
+        )
         return twiml_reply()
 
     session_link = whatsapp_sessions.get(from_number)
@@ -621,7 +639,10 @@ def twilio_whatsapp():
             return twiml_reply()
 
         whatsapp_sessions[from_number] = {"queue_id": queue_id, "token": token}
-        response.message("Linked successfully. Send 'status' for queue position or 'ai <message>' to chat.")
+        name = state["users"].get(str(token), "there")
+        response.message(
+            f"Linked successfully. Welcome, {name}! Send 'status' for queue position or 'ai <message>' to chat."
+        )
         return twiml_reply()
 
     queue_id = session_link["queue_id"]
