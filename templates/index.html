@@ -195,6 +195,9 @@
             <div class="ai-label">🤖 AI Assistant</div>
             <div id="ai-text">Initializing...</div>
             <div id="ai-options"></div>
+            <p style="font-size:12px; color:var(--sub); margin-top:8px; line-height:1.45;">
+                WhatsApp bot: send <b>link QUEUE_ID TOKEN</b>, then <b>status</b> or <b>ai your message</b>.
+            </p>
         </div>
 
         <button class="btn btn-secondary" onclick="leaveQueue()" style="margin-top:14px;">Leave Queue</button>
@@ -240,14 +243,19 @@
     let maxEta = null; // for ETA ring
 
     window.onload = async () => {
-        if (myToken && myName) {
-            const res = await fetch('/api/status');
+        if (myToken && myName && myQueueId) {
+            const res = await fetch(`/api/status?token=${myToken}&queue_id=${encodeURIComponent(myQueueId)}`);
+            if (!res.ok) {
+                localStorage.clear();
+                myToken = null; myName = null; myQueueId = null;
+                return;
+            }
             const data = await res.json();
             if (parseInt(myToken) > 1 && data.last_token >= parseInt(myToken)) {
                 if (data.current > parseInt(myToken)) triggerGoodbye();
                 else showQueue();
             } else {
-                localStorage.clear(); myToken = null; myName = null;
+                localStorage.clear(); myToken = null; myName = null; myQueueId = null;
             }
         }
     };
@@ -276,12 +284,12 @@
         
         // Get the current queue ID from the server
         try {
-            const statusRes = await fetch('/api/status?token=1');
+            const enteredQueue = queueIdInput.value.trim().toUpperCase();
+            const statusRes = await fetch(`/api/queue_exists?queue_id=${encodeURIComponent(enteredQueue)}`);
             const statusData = await statusRes.json();
-            const currentQueueId = statusData.queue_id;
             
             // Validate Queue ID
-            if (queueIdInput.value.trim().toUpperCase() !== currentQueueId) {
+            if (!statusData.valid) {
                 errorMsg.textContent = '❌ Queue ID does not match. Please enter the correct Queue ID.';
                 errorMsg.style.display = 'block';
                 return;
@@ -294,8 +302,17 @@
         
         const res = await fetch('/api/join', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name: nameInput.value.trim() })
+            body: JSON.stringify({
+                name: nameInput.value.trim(),
+                queue_id: queueIdInput.value.trim().toUpperCase()
+            })
         });
+        if (!res.ok) {
+            const err = await res.json();
+            errorMsg.textContent = err.error || 'Unable to join queue.';
+            errorMsg.style.display = 'block';
+            return;
+        }
         const data = await res.json();
         myToken = data.token; myName = data.name; myQueueId = data.queue_id;
         localStorage.setItem('token', myToken);
@@ -342,7 +359,16 @@
     async function updateStatus() {
         if (!myToken) return;
         try {
-            const res = await fetch(`/api/status?token=${myToken}`);
+            const res = await fetch(`/api/status?token=${myToken}&queue_id=${encodeURIComponent(myQueueId)}`);
+            if (!res.ok) {
+                const err = await res.json();
+                document.getElementById('error-msg').textContent = err.error || 'Queue not found.';
+                document.getElementById('error-msg').style.display = 'block';
+                clearInterval(statusInterval);
+                localStorage.clear();
+                location.reload();
+                return;
+            }
             const data = await res.json();
             document.getElementById('current').innerText = data.current;
             document.getElementById('eta').innerText = data.eta;
@@ -370,7 +396,7 @@
         try {
             const res = await fetch('/api/goodbye', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ token: myToken })
+                body: JSON.stringify({ token: myToken, queue_id: myQueueId })
             });
             const data = await res.json();
             document.getElementById('goodbye-text').innerText = data.text;
@@ -384,15 +410,15 @@
         try {
             const res = await fetch('/api/interact', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ choice, token: myToken })
+                body: JSON.stringify({ choice, token: myToken, queue_id: myQueueId })
             });
             const data = await res.json();
             typeEffect(data.text);
             const container = document.getElementById('ai-options');
             container.innerHTML = '';
 
-            // Inject snake button if rage is high enough
-            if (data.rage_score > 4) {
+            // Offer snake when satisfaction suggests user needs engagement.
+            if ((data.satisfaction_score || 7) <= 6) {
                 const snakeBtn = document.createElement('button');
                 snakeBtn.className = 'btn';
                 snakeBtn.textContent = '🐍 Play Snake while you wait';
@@ -401,7 +427,8 @@
                 container.appendChild(snakeBtn);
             }
 
-            data.options.forEach(opt => {
+            const options = Array.isArray(data.options) ? data.options : ['Play Snake', 'Check ETA', 'Any updates?'];
+            options.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = 'btn';
                 btn.textContent = opt;
@@ -578,7 +605,7 @@
         try {
             const res = await fetch('/api/game_score', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ token: myToken, score, playing })
+                body: JSON.stringify({ token: myToken, score, playing, queue_id: myQueueId })
             });
             const data = await res.json();
             // Check if discount was auto-applied

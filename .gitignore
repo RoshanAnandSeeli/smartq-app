@@ -24,3 +24,4 @@ wheels/
 .DS_Store
 .env
 *.log
+*.db

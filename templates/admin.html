@@ -217,6 +217,8 @@
             </div>
         </div>
         <div class="header-right">
+            <button class="theme-btn" onclick="addAdminPassword()">+ Admin Password</button>
+            <button class="theme-btn" onclick="refreshQueueId()">Refresh Queue ID</button>
             <button class="theme-btn" onclick="toggleTheme()">🌓</button>
         </div>
     </div>
@@ -609,6 +611,35 @@
         const res = await fetch('/api/next', { method: 'POST' });
         if (res.ok) { clearInterval(timerInterval); lastServingToken = null; refresh(); }
         else alert('Error updating queue.');
+    }
+
+    async function refreshQueueId() {
+        const ok = confirm('Refresh queue id? This will expire the current queue immediately.');
+        if (!ok) return;
+        const res = await fetch('/api/refresh_queue_id', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || 'Failed to refresh queue id.');
+            return;
+        }
+        alert(`Queue ID refreshed.\nOld: ${data.old_queue_id}\nNew: ${data.new_queue_id}`);
+        refresh();
+    }
+
+    async function addAdminPassword() {
+        const pwd = prompt('Enter new admin password (min 6 chars):');
+        if (!pwd) return;
+        const res = await fetch('/api/admin_passwords', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || 'Failed to create admin password.');
+            return;
+        }
+        alert(`New admin password created.\nAssigned Queue ID: ${data.queue_id}`);
     }
 
     function showEmptyCelebration(tbody) {

@@ -13,6 +13,12 @@
 <body>
     <div class="login-card">
         <h2>Admin Portal</h2>
+        <p style="color:#666; font-size:0.9rem; margin-bottom:10px;">Use your unique admin password.</p>
+        {% if error %}
+        <div style="background:#ffe9e9; color:#b30000; border:1px solid #ffc9c9; border-radius:6px; padding:8px; margin-bottom:10px; font-size:0.9rem;">
+            {{ error }}
+        </div>
+        {% endif %}
         <form method="post">
             <input type="password" name="password" placeholder="Enter Admin Password" autofocus>
             <button type="submit">Login</button>
