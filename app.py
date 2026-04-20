@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
@@ -522,12 +522,16 @@ def next_queue():
 
 
 @app.route('/twilio/whatsapp', methods=['POST'])
+@app.route('/twilio/whatsapp/', methods=['POST'])
 def twilio_whatsapp():
     from_number = request.values.get('From', '').strip()
     body = request.values.get('Body', '').strip()
     lower = body.lower()
 
     response = MessagingResponse()
+
+    def twiml_reply():
+        return Response(str(response), mimetype='application/xml')
 
     def available_queue_ids():
         ids = sorted({s["queue_id"] for s in queue_states.values()})
@@ -543,7 +547,7 @@ def twilio_whatsapp():
         queues = available_queue_ids()
         if not queues:
             response.message("No active queues are available right now. Please try again shortly.")
-            return str(response)
+            return twiml_reply()
         whatsapp_sessions[from_number] = {
             "stage": "awaiting_queue",
             "menu": queues
@@ -556,27 +560,27 @@ def twilio_whatsapp():
             "3) After linking, use: status or ai <message>.\n\n"
             + build_queue_menu(queues)
         )
-        return str(response)
+        return twiml_reply()
 
     if lower.startswith('link '):
         parts = body.split()
         if len(parts) < 3:
             response.message("Usage: link <QUEUE_ID> <TOKEN>")
-            return str(response)
+            return twiml_reply()
         queue_id = parts[1].upper().strip()
         token = parts[2].strip()
         _, state = find_state_by_queue_id(queue_id)
         if not state or token not in state["users"]:
             response.message("Invalid queue id or token.")
-            return str(response)
+            return twiml_reply()
         whatsapp_sessions[from_number] = {"queue_id": queue_id, "token": int(token)}
         response.message("Linked. Send 'status' for queue position or 'ai <message>' to chat.")
-        return str(response)
+        return twiml_reply()
 
     session_link = whatsapp_sessions.get(from_number)
     if not session_link:
         response.message("Send 'hi' to start and link your queue.")
-        return str(response)
+        return twiml_reply()
 
     stage = session_link.get("stage")
     if stage == "awaiting_queue":
@@ -594,38 +598,38 @@ def twilio_whatsapp():
 
         if not selected_queue:
             response.message("Invalid queue selection. Reply with a queue number or queue id from the menu.")
-            return str(response)
+            return twiml_reply()
 
         session_link["stage"] = "awaiting_token"
         session_link["queue_id"] = selected_queue
         session_link.pop("menu", None)
         whatsapp_sessions[from_number] = session_link
         response.message(f"Selected queue {selected_queue}. Now send your token number.")
-        return str(response)
+        return twiml_reply()
 
     if stage == "awaiting_token":
         token_raw = body.strip()
         if not token_raw.isdigit():
             response.message("Please send only your token number (example: 7).")
-            return str(response)
+            return twiml_reply()
 
         token = int(token_raw)
         queue_id = session_link.get("queue_id", "")
         _, state = find_state_by_queue_id(queue_id)
         if not state or str(token) not in state["users"]:
             response.message("Token not found for that queue. Please check and send your token again.")
-            return str(response)
+            return twiml_reply()
 
         whatsapp_sessions[from_number] = {"queue_id": queue_id, "token": token}
         response.message("Linked successfully. Send 'status' for queue position or 'ai <message>' to chat.")
-        return str(response)
+        return twiml_reply()
 
     queue_id = session_link["queue_id"]
     token = int(session_link["token"])
     _, state = find_state_by_queue_id(queue_id)
     if not state:
         response.message("Queue not found or expired. Please relink with a new queue id.")
-        return str(response)
+        return twiml_reply()
 
     if lower == 'status':
         ahead = max(0, token - state["current_serving"])
@@ -635,17 +639,17 @@ def twilio_whatsapp():
             response.message("It is your turn now.")
         else:
             response.message(f"Queue {queue_id}: {ahead} ahead of you, ETA ~{eta} min.")
-        return str(response)
+        return twiml_reply()
 
     if lower.startswith('ai'):
         text = body[2:].strip() if len(body) > 2 else "How is my queue moving?"
         raw = get_groq_response(state, text, token - state["current_serving"], token)
         data = parse_ai_json(raw, "You're doing great. Your turn is coming soon.")
         response.message(data.get("text", "You're doing great. Your turn is coming soon."))
-        return str(response)
+        return twiml_reply()
 
     response.message("Commands: status | ai <message> | link <QUEUE_ID> <TOKEN>")
-    return str(response)
+    return twiml_reply()
 
 
 def auto_advance_worker():
