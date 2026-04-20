@@ -1,13 +1,27 @@
-# Smart-Queue-Management
+# Smart Queue Management
 
-## 🚗 Blockchain-Based Smart Parking System
+An AI-assisted queue management app for entrepreneurship projects.
 
-A modern IoT-powered smart parking management system featuring **blockchain-inspired data integrity** through SHA-256 hashed entry IDs for immutable record keeping.
+## Features
+- Customer queue joining with Queue ID validation
+- Supportive AI assistant while customers wait
+- Admin dashboard with live queue status
+- ETA tracking and discount controls
+- Refresh Queue ID workflow for expiring old queues
 
-### Key Features:
-- 🔐 **Blockchain Security**: Entry IDs are cryptographically hashed using SHA-256 (displayed as XX...XX with full hash on hover)
-- 📊 **Real-time Monitoring**: Live vehicle count and AI-powered decision making
-- 🌐 **IoT Integration**: ThingSpeak platform connectivity
-- 📱 **Modern Dashboard**: Responsive web interface with data visualization
-- 🤖 **AI Integration**: GROQ API for intelligent parking decisions
-- 📋 **Serial Numbering**: History entries show original ThingSpeak entry IDs for reference
+## Run Locally
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+## Environment Variables
+- `GROQ_API_KEY`
+- `FLASK_SECRET_KEY`
+- `PORT`
+
+## Project Structure
+- `app.py` - Flask backend
+- `templates/index.html` - customer UI
+- `templates/admin.html` - admin dashboard
+- `templates/login.html` - admin access screen
