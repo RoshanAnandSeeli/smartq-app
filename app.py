@@ -40,7 +40,7 @@ ADMIN_SEED_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
 
 twilio_client = None
 queue_states = {}
-whatsapp_sessions = {}  # from_number -> {queue_id, token}
+whatsapp_sessions = {}  # from_number -> conversational session state
 
 
 def get_db():
@@ -529,6 +529,35 @@ def twilio_whatsapp():
 
     response = MessagingResponse()
 
+    def available_queue_ids():
+        ids = sorted({s["queue_id"] for s in queue_states.values()})
+        return ids
+
+    def build_queue_menu(ids):
+        lines = ["Available queues:"]
+        for i, qid in enumerate(ids, start=1):
+            lines.append(f"{i}. {qid}")
+        return "\n".join(lines)
+
+    if lower in ('hi', 'hello', 'start', 'menu'):
+        queues = available_queue_ids()
+        if not queues:
+            response.message("No active queues are available right now. Please try again shortly.")
+            return str(response)
+        whatsapp_sessions[from_number] = {
+            "stage": "awaiting_queue",
+            "menu": queues
+        }
+        response.message(
+            "Welcome to SmartQ WhatsApp Assistant.\n"
+            "Instructions:\n"
+            "1) Choose a queue from the list by number or queue id.\n"
+            "2) Then send your token number.\n"
+            "3) After linking, use: status or ai <message>.\n\n"
+            + build_queue_menu(queues)
+        )
+        return str(response)
+
     if lower.startswith('link '):
         parts = body.split()
         if len(parts) < 3:
@@ -546,7 +575,49 @@ def twilio_whatsapp():
 
     session_link = whatsapp_sessions.get(from_number)
     if not session_link:
-        response.message("Please link first: link <QUEUE_ID> <TOKEN>")
+        response.message("Send 'hi' to start and link your queue.")
+        return str(response)
+
+    stage = session_link.get("stage")
+    if stage == "awaiting_queue":
+        menu = session_link.get("menu", [])
+        selected_queue = None
+
+        if body.isdigit():
+            idx = int(body)
+            if 1 <= idx <= len(menu):
+                selected_queue = menu[idx - 1]
+        else:
+            typed_queue = body.upper().strip()
+            if typed_queue in menu:
+                selected_queue = typed_queue
+
+        if not selected_queue:
+            response.message("Invalid queue selection. Reply with a queue number or queue id from the menu.")
+            return str(response)
+
+        session_link["stage"] = "awaiting_token"
+        session_link["queue_id"] = selected_queue
+        session_link.pop("menu", None)
+        whatsapp_sessions[from_number] = session_link
+        response.message(f"Selected queue {selected_queue}. Now send your token number.")
+        return str(response)
+
+    if stage == "awaiting_token":
+        token_raw = body.strip()
+        if not token_raw.isdigit():
+            response.message("Please send only your token number (example: 7).")
+            return str(response)
+
+        token = int(token_raw)
+        queue_id = session_link.get("queue_id", "")
+        _, state = find_state_by_queue_id(queue_id)
+        if not state or str(token) not in state["users"]:
+            response.message("Token not found for that queue. Please check and send your token again.")
+            return str(response)
+
+        whatsapp_sessions[from_number] = {"queue_id": queue_id, "token": token}
+        response.message("Linked successfully. Send 'status' for queue position or 'ai <message>' to chat.")
         return str(response)
 
     queue_id = session_link["queue_id"]
