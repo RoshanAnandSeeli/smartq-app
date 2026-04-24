@@ -162,6 +162,7 @@
         .wa-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
         .wa-badge.linked { background: rgba(37,211,102,0.16); color: #2fbf71; }
         .wa-badge.not-linked { background: rgba(255,255,255,0.08); color: var(--sub); }
+        .repeat-note { display: block; margin-top: 6px; font-size: 0.72rem; font-weight: 700; color: var(--warn); }
 
         /* Empty queue celebration */
         .empty-state { padding: 40px 20px; text-align: center; }
@@ -597,7 +598,7 @@
 
             tr.innerHTML = `
                 <td><span class="token-badge">#${m.token}</span>${m.is_current ? '<span class="serving-tag">NOW</span>' : ''}</td>
-                <td style="font-weight:500">${m.name}</td>
+                <td style="font-weight:500">${m.name}${m.repeat_count > 1 ? `<span class="repeat-note">Repeat visit x${m.repeat_count}</span>` : ''}</td>
                 <td><span class="rage-badge ${badgeClass}">${satisfactionLabel}</span>${discountHtml}</td>
                 <td>${m.game ? `<span class="game-badge ${m.game.playing ? 'playing' : ''}">${m.game.playing ? '🎮' : '🏆'} ${m.game.score}</span>` : '<span style="color:var(--sub);font-size:0.75rem">—</span>'}</td>
                 <td>${whatsappBadge}</td>

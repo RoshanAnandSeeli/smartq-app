@@ -619,6 +619,12 @@
             line-height: 1.65;
         }
 
+        .goodbye-actions {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
         .confetti-emoji {
             font-size: 52px;
             display: block;
@@ -765,6 +771,10 @@
         <div class="eyebrow">Queue Update</div>
         <div class="goodbye-title">It is your turn</div>
         <div class="goodbye-msg" id="goodbye-text">Loading your message...</div>
+        <div class="goodbye-actions">
+            <button class="btn" onclick="joinQueueAgain()">Join Queue Again</button>
+            <button class="btn btn-secondary" onclick="backToRegistration()">Back to Registration</button>
+        </div>
     </div>
 </div>
 
@@ -867,6 +877,8 @@
     function showQueue() {
         document.getElementById('registration-view').style.display = 'none';
         document.getElementById('queue-view').style.display = 'block';
+        document.getElementById('goodbye-view').style.display = 'none';
+        document.getElementById('snake-view').style.display = 'none';
         document.getElementById('my-token').innerText = '#' + myToken;
         document.getElementById('queue-id-display').innerText = myQueueId;
         document.getElementById('inline-queue-id').innerText = myQueueId;
@@ -889,6 +901,54 @@
         if (confirm('Leave the queue? You will lose your current spot.')) {
             localStorage.clear();
             location.reload();
+        }
+    }
+
+    function backToRegistration() {
+        goodbyeTriggered = false;
+        clearInterval(statusInterval);
+        statusInterval = null;
+        document.getElementById('queue-view').style.display = 'none';
+        document.getElementById('snake-view').style.display = 'none';
+        document.getElementById('goodbye-view').style.display = 'none';
+        document.getElementById('registration-view').style.display = 'block';
+        document.getElementById('queue-id-input').value = myQueueId || '';
+        document.getElementById('user-name').value = myName || '';
+    }
+
+    async function joinQueueAgain() {
+        if (!myName || !myQueueId) {
+            backToRegistration();
+            return;
+        }
+
+        const previousToken = myToken;
+        goodbyeTriggered = false;
+        try {
+            const res = await fetch('/api/join', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: myName,
+                    queue_id: myQueueId
+                })
+            });
+            if (!res.ok) {
+                backToRegistration();
+                return;
+            }
+            const data = await res.json();
+            myToken = data.token;
+            localStorage.setItem('token', myToken);
+            localStorage.setItem('userName', myName);
+            localStorage.setItem('queueId', myQueueId);
+            shownDiscount = null;
+            maxEta = null;
+            document.getElementById('goodbye-text').innerText = `You were previously token #${previousToken}. Your new token is #${myToken}.`;
+            if (statusInterval) clearInterval(statusInterval);
+            showQueue();
+        } catch (e) {
+            backToRegistration();
         }
     }
 
