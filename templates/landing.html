@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Queue Management System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;700;800&display=swap');
+
+        :root {
+            --bg: #f6efe6;
+            --paper: rgba(255, 250, 244, 0.84);
+            --panel: #fff9f1;
+            --ink: #221814;
+            --muted: #6f6158;
+            --line: rgba(34, 24, 20, 0.1);
+            --orange: #d95d39;
+            --gold: #f3b63f;
+            --teal: #1f6f78;
+            --teal-soft: #dff4f6;
+            --shadow: 0 24px 80px rgba(70, 43, 21, 0.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Manrope', 'Segoe UI', sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(217, 93, 57, 0.14), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(31, 111, 120, 0.18), transparent 30%),
+                linear-gradient(180deg, #fbf6ef 0%, #f3eadf 100%);
+            min-height: 100vh;
+        }
+
+        .shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 20px 64px;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 18px;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: var(--paper);
+            backdrop-filter: blur(16px);
+            box-shadow: var(--shadow);
+            margin-bottom: 26px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+
+        .brand-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--orange), var(--gold));
+            display: grid;
+            place-items: center;
+            color: white;
+            font-size: 1rem;
+            box-shadow: 0 12px 24px rgba(217, 93, 57, 0.22);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a,
+        .cta-row a,
+        .feature-link {
+            text-decoration: none;
+        }
+
+        .chip-link {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 10px 14px;
+            color: var(--ink);
+            font-weight: 700;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.35);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+            align-items: stretch;
+            margin-bottom: 30px;
+        }
+
+        .hero-copy,
+        .hero-card,
+        .section-panel,
+        .feature-card,
+        .screen-card {
+            border: 1px solid var(--line);
+            background: var(--paper);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-copy {
+            border-radius: 34px;
+            padding: 34px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-copy::after {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: -70px;
+            top: -60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(243, 182, 63, 0.26), transparent 65%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--teal);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 0.74rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--teal);
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.05em;
+        }
+
+        h1 {
+            font-size: clamp(2.4rem, 5vw, 4.6rem);
+            line-height: 0.96;
+            margin-bottom: 14px;
+            max-width: 9.2ch;
+        }
+
+        .lead {
+            font-size: 1rem;
+            line-height: 1.75;
+            color: var(--muted);
+            max-width: 58ch;
+            margin-bottom: 22px;
+        }
+
+        .cta-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .cta-primary,
+        .cta-secondary {
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .cta-primary {
+            background: linear-gradient(135deg, var(--orange), var(--gold));
+            color: #fffdf7;
+            box-shadow: 0 12px 26px rgba(217, 93, 57, 0.24);
+        }
+
+        .cta-secondary {
+            background: rgba(255,255,255,0.45);
+            color: var(--ink);
+            border: 1px solid var(--line);
+        }
+
+        .hero-points {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .hero-points span {
+            border-radius: 999px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.58);
+            border: 1px solid var(--line);
+            font-size: 0.82rem;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .hero-card {
+            border-radius: 34px;
+            padding: 22px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .mini-dashboard {
+            background: linear-gradient(160deg, #201914, #32261d);
+            color: #fff9f1;
+            border-radius: 26px;
+            padding: 20px;
+            min-height: 100%;
+            display: grid;
+            gap: 16px;
+        }
+
+        .dashboard-top,
+        .screen-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-pill,
+        .tiny-label {
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+        }
+
+        .dashboard-pill {
+            background: rgba(255,255,255,0.08);
+            color: #ffd7a5;
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .admin-stat {
+            padding: 12px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .admin-stat strong {
+            display: block;
+            font-size: 1.5rem;
+            margin-top: 4px;
+        }
+
+        .admin-stat span,
+        .queue-list small,
+        .tiny-copy,
+        .screen-caption p {
+            color: rgba(255, 249, 241, 0.72);
+            font-size: 0.78rem;
+            line-height: 1.5;
+        }
+
+        .queue-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .queue-row {
+            display: grid;
+            grid-template-columns: 70px 1fr 88px;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.05);
+            align-items: center;
+        }
+
+        .queue-row strong {
+            color: #ffd166;
+            font-size: 0.92rem;
+        }
+
+        .section-panel {
+            border-radius: 30px;
+            padding: 28px;
+            margin-bottom: 26px;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .section-head p {
+            color: var(--muted);
+            max-width: 56ch;
+            line-height: 1.7;
+        }
+
+        .screens-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .screen-card {
+            border-radius: 24px;
+            overflow: hidden;
+            background: #fffaf3;
+        }
+
+        .screen-frame {
+            background: linear-gradient(180deg, #1f1a16, #2d231c);
+            padding: 14px;
+            aspect-ratio: 0.78;
+        }
+
+        .screen-ui {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(180deg, #211b16, #15110e);
+            padding: 16px;
+            color: #fff9f1;
+            display: grid;
+            gap: 12px;
+        }
+
+        .screen-ui.customer {
+            background: linear-gradient(180deg, #1b1512, #2b221d);
+        }
+
+        .screen-ui.whatsapp {
+            background: linear-gradient(180deg, #10261f, #0d1815);
+        }
+
+        .tiny-label {
+            background: rgba(255,255,255,0.1);
+            color: #fff7e6;
+        }
+
+        .queue-ring {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            margin: 0 auto;
+            border: 10px solid rgba(255,255,255,0.08);
+            border-top-color: #ffb703;
+            display: grid;
+            place-items: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+        }
+
+        .stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        .tile,
+        .chat-bubble {
+            border-radius: 16px;
+            padding: 12px;
+            background: rgba(255,255,255,0.08);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .chat-bubble.user {
+            background: rgba(37, 211, 102, 0.18);
+            justify-self: end;
+        }
+
+        .screen-caption {
+            padding: 16px 18px 18px;
+            background: #fffaf3;
+        }
+
+        .screen-caption h3 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .screen-caption p {
+            color: var(--muted);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            border-radius: 24px;
+            padding: 22px;
+            background: rgba(255,250,244,0.88);
+        }
+
+        .feature-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, var(--teal-soft), #ffffff);
+        }
+
+        .feature-card h3 {
+            font-size: 1.12rem;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 0.92rem;
+        }
+
+        .highlight-strip {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        .highlight-box {
+            border-radius: 24px;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(31,111,120,0.14), rgba(255,255,255,0.6));
+            border: 1px solid var(--line);
+        }
+
+        .highlight-box.orange {
+            background: linear-gradient(135deg, rgba(217,93,57,0.16), rgba(255,255,255,0.58));
+        }
+
+        .highlight-box h3 {
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+        }
+
+        .highlight-box p {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 960px) {
+            .hero,
+            .highlight-strip,
+            .screens-grid,
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-card,
+            .hero-copy,
+            .section-panel { border-radius: 28px; }
+        }
+
+        @media (max-width: 640px) {
+            .shell { padding: 18px 14px 48px; }
+            .nav,
+            .section-panel,
+            .hero-copy,
+            .hero-card { padding: 18px; }
+            .nav { align-items: flex-start; flex-direction: column; }
+            .section-head { flex-direction: column; align-items: flex-start; }
+            .cta-row { flex-direction: column; }
+            .cta-primary,
+            .cta-secondary { width: 100%; }
+            .admin-stats { grid-template-columns: 1fr; }
+            .queue-row { grid-template-columns: 60px 1fr; }
+            .queue-row div:last-child { grid-column: 1 / -1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="nav">
+            <div class="brand">
+                <div class="brand-badge">SQ</div>
+                <div>
+                    <div>Smart Queue Management</div>
+                    <div style="font-family:Manrope, sans-serif; font-size:0.82rem; color:var(--muted); font-weight:700; letter-spacing:0;">Micro Project Prototype</div>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a class="chip-link" href="/customer">Customer</a>
+                <a class="chip-link" href="/login">Admin</a>
+            </div>
+        </div>
+
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="eyebrow">Entrepreneurship Project</div>
+                <h1>Smart Queue Management System</h1>
+                <p class="lead">A simple digital queue platform that reduces crowding, improves waiting transparency, and keeps both customers and admins updated through live status tracking, AI assistance, and WhatsApp integration.</p>
+                <div class="cta-row">
+                    <a class="cta-primary" href="/customer">Open Customer Side</a>
+                    <a class="cta-secondary" href="/login">Open Admin Dashboard</a>
+                </div>
+                <div class="hero-points">
+                    <span>Real-time token flow</span>
+                    <span>WhatsApp updates</span>
+                    <span>Admin control panel</span>
+                    <span>Engaging customer experience</span>
+                </div>
+            </div>
+
+            <div class="hero-card">
+                <div class="mini-dashboard">
+                    <div class="dashboard-top">
+                        <div>
+                            <div class="tiny-copy">Admin overview</div>
+                            <h3 style="font-size:1.5rem; margin-top:4px;">Live queue control</h3>
+                        </div>
+                        <div class="dashboard-pill">Queue ID: A7F2K9Q1</div>
+                    </div>
+                    <div class="admin-stats">
+                        <div class="admin-stat">
+                            <span>Now serving</span>
+                            <strong>12</strong>
+                        </div>
+                        <div class="admin-stat">
+                            <span>Waiting</span>
+                            <strong>08</strong>
+                        </div>
+                        <div class="admin-stat">
+                            <span>Avg speed</span>
+                            <strong>4.8m</strong>
+                        </div>
+                    </div>
+                    <div class="queue-list">
+                        <div class="queue-row">
+                            <strong>#12</strong>
+                            <div>
+                                <div style="font-weight:800;">Arun</div>
+                                <small>Currently at counter</small>
+                            </div>
+                            <div class="dashboard-pill" style="justify-self:end;">Satisfaction 8/10</div>
+                        </div>
+                        <div class="queue-row">
+                            <strong>#13</strong>
+                            <div>
+                                <div style="font-weight:800;">Keerthi</div>
+                                <small>ETA 4.5 minutes</small>
+                            </div>
+                            <div class="dashboard-pill" style="justify-self:end;">WhatsApp linked</div>
+                        </div>
+                        <div class="queue-row">
+                            <strong>#14</strong>
+                            <div>
+                                <div style="font-weight:800;">Rahul</div>
+                                <small>Playing in-app game</small>
+                            </div>
+                            <div class="dashboard-pill" style="justify-self:end;">Potential discount</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-panel">
+            <div class="section-head">
+                <div>
+                    <div class="eyebrow">App Walkthrough</div>
+                    <h2 style="font-size:2rem;">How the system works</h2>
+                </div>
+                <p>These visual previews show the main project flow: customers join with a queue ID, monitor ETA live, and optionally continue updates through WhatsApp while the admin controls movement from the dashboard.</p>
+            </div>
+
+            <div class="screens-grid">
+                <article class="screen-card">
+                    <div class="screen-frame">
+                        <div class="screen-ui customer">
+                            <div class="screen-top">
+                                <span class="tiny-label">Customer screen</span>
+                                <span class="tiny-label">Join queue</span>
+                            </div>
+                            <div>
+                                <h3 style="font-size:1.35rem;">SmartQ Check-In</h3>
+                                <p style="font-size:0.82rem; color:rgba(255,249,241,0.7); line-height:1.6; margin-top:6px;">Enter queue ID and name to receive a token instantly.</p>
+                            </div>
+                            <div class="stack">
+                                <div class="tile">Queue ID: <strong>A7F2K9Q1</strong></div>
+                                <div class="tile">Customer name: <strong>Anjali</strong></div>
+                                <div class="tile" style="background:linear-gradient(135deg, rgba(255,209,102,0.28), rgba(255,138,91,0.22)); color:#fff7e6; font-weight:800;">Join the Queue</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="screen-caption">
+                        <h3>1. Quick customer registration</h3>
+                        <p>The user enters the queue ID displayed by the admin and joins the queue in a few seconds.</p>
+                    </div>
+                </article>
+
+                <article class="screen-card">
+                    <div class="screen-frame">
+                        <div class="screen-ui customer">
+                            <div class="screen-top">
+                                <span class="tiny-label">Live queue view</span>
+                                <span class="tiny-label">ETA tracking</span>
+                            </div>
+                            <div class="queue-ring">6.5 min</div>
+                            <div class="stack">
+                                <div class="tile">Token <strong>#14</strong> · Queue ID <strong>A7F2K9Q1</strong></div>
+                                <div class="tile">Now serving: <strong>#12</strong></div>
+                                <div class="tile">AI assistant suggests status updates and waiting-time support.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="screen-caption">
+                        <h3>2. Transparent waiting experience</h3>
+                        <p>Customers can view current token movement, estimated wait time, and helpful AI responses while they wait.</p>
+                    </div>
+                </article>
+
+                <article class="screen-card">
+                    <div class="screen-frame">
+                        <div class="screen-ui whatsapp">
+                            <div class="screen-top">
+                                <span class="tiny-label">WhatsApp flow</span>
+                                <span class="tiny-label">Remote updates</span>
+                            </div>
+                            <div class="stack">
+                                <div class="chat-bubble user">join spider-heavy</div>
+                                <div class="chat-bubble">Sandbox connected. Now send <strong>hi</strong> to start SmartQ.</div>
+                                <div class="chat-bubble user">A7F2K9Q1 · Token 14</div>
+                                <div class="chat-bubble">Linked successfully. Send <strong>status</strong> or <strong>ai</strong> for help.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="screen-caption">
+                        <h3>3. WhatsApp queue assistant</h3>
+                        <p>Customers first join the Twilio sandbox by sending <strong>join spider-heavy</strong> to <strong>+1 (415) 523-8886</strong>, then send <strong>hi</strong> to start the SmartQ assistant.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section-panel">
+            <div class="section-head">
+                <div>
+                    <div class="eyebrow">Key Features</div>
+                    <h2 style="font-size:2rem;">Built for modern waiting management</h2>
+                </div>
+                <p>The prototype blends queue operations, customer communication, and lightweight engagement into a single system that feels practical and scalable.</p>
+            </div>
+
+            <div class="features-grid">
+                <article class="feature-card">
+                    <div class="feature-icon">01</div>
+                    <h3>Digital token generation</h3>
+                    <p>Customers no longer need to stand in a physical line. The system assigns tokens digitally and keeps everyone in an organized sequence.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">02</div>
+                    <h3>Admin queue control</h3>
+                    <p>The admin panel shows the current token, queue count, service timing, customer satisfaction status, and quick controls to move the queue forward.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">03</div>
+                    <h3>Real-time ETA visibility</h3>
+                    <p>Customers can track how many minutes remain and see exactly which token is being served, reducing uncertainty and crowd pressure.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">04</div>
+                    <h3>WhatsApp integration</h3>
+                    <p>Customers first connect to the Twilio sandbox with <strong>join spider-heavy</strong> sent to <strong>+1 (415) 523-8886</strong>. After that, they send <strong>hi</strong>, link their queue and token, and use <strong>status</strong> or <strong>ai &lt;message&gt;</strong> for updates.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">05</div>
+                    <h3>AI-driven assistance</h3>
+                    <p>The built-in assistant keeps waiting customers informed with status messaging, encouragement, and lightweight interaction while they wait.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon">06</div>
+                    <h3>Engagement and reward layer</h3>
+                    <p>A mini-game and discount logic help turn waiting time into a better customer experience while giving the admin more flexibility when queues slow down.</p>
+                </article>
+            </div>
+
+            <div class="highlight-strip">
+                <div class="highlight-box">
+                    <h3>Why this matters</h3>
+                    <p>Traditional queues waste time and create frustration. Smart Queue Management improves service efficiency, lowers crowding, and gives customers a more predictable experience, which makes it relevant for hospitals, banks, colleges, offices, and service centers.</p>
+                </div>
+                <div class="highlight-box orange">
+                    <h3>Entrepreneurial value</h3>
+                    <p>This idea has product potential as a low-cost service platform for local businesses and institutions that want better customer handling without complex hardware.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="footer">
+            Smart Queue Management System landing page for project demonstration and documentation.
+        </div>
+    </div>
+</body>
+</html>

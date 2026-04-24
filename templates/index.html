@@ -6,184 +6,687 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>SmartQ | Your Queue</title>
+    <title>SmartQ | Customer Queue</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;700;800&display=swap');
 
         :root {
-            --bg: #f0f4f8; --card: #ffffff; --text: #1a202c; --sub: #718096;
-            --primary: #6c5ce7; --accent: #a29bfe; --glow: rgba(108,92,231,0.3);
-            --border: rgba(0,0,0,0.08);
+            --bg: #f6f0e7;
+            --bg-strong: #fffaf4;
+            --card: rgba(255, 250, 244, 0.9);
+            --text: #211b16;
+            --sub: #6d6359;
+            --primary: #d95d39;
+            --secondary: #1f6f78;
+            --accent: #ffbe0b;
+            --border: rgba(33, 27, 22, 0.1);
+            --glow: rgba(217, 93, 57, 0.22);
+            --danger: #b42318;
         }
+
         [data-theme="dark"] {
-            --bg: #0d1117; --card: rgba(22,27,34,0.85); --text: #e6edf3; --sub: #8b949e;
-            --primary: #a29bfe; --accent: #6c5ce7; --glow: rgba(162,155,254,0.2);
-            --border: rgba(255,255,255,0.08);
+            --bg: #181512;
+            --bg-strong: #231d18;
+            --card: rgba(35, 29, 24, 0.88);
+            --text: #f7efe6;
+            --sub: #c7b7a7;
+            --primary: #ff8a5b;
+            --secondary: #67d5df;
+            --accent: #ffd166;
+            --border: rgba(255, 255, 255, 0.1);
+            --glow: rgba(255, 138, 91, 0.26);
+            --danger: #ff6b6b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background: var(--bg); color: var(--text);
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            display: flex; justify-content: center; align-items: flex-start;
-            min-height: 100dvh; padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
-            transition: background 0.4s; overflow-x: hidden;
+            background:
+                radial-gradient(circle at top left, rgba(255, 138, 91, 0.18), transparent 32%),
+                radial-gradient(circle at bottom right, rgba(103, 213, 223, 0.18), transparent 28%),
+                linear-gradient(160deg, var(--bg), var(--bg-strong));
+            color: var(--text);
+            font-family: 'Manrope', 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100dvh;
+            padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
+            overflow-x: hidden;
         }
-        @media (min-height: 600px) { body { align-items: center; } }
 
-        /* Animated background */
-        [data-theme="dark"] body {
-            background: #0d1117;
+        @media (min-height: 760px) {
+            body { align-items: center; }
         }
-        .bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; animation: drift 12s infinite alternate ease-in-out; }
-        .orb1 { width: 400px; height: 400px; background: #6c5ce7; top: -100px; left: -100px; animation-delay: 0s; }
-        .orb2 { width: 300px; height: 300px; background: #00cec9; bottom: -80px; right: -80px; animation-delay: -4s; }
-        .orb3 { width: 200px; height: 200px; background: #fd79a8; top: 50%; left: 50%; animation-delay: -8s; }
-        @keyframes drift { from{transform:translate(0,0) scale(1)} to{transform:translate(40px,30px) scale(1.1)} }
-        [data-theme="light"] .bg-orbs { display: none; }
 
-        /* Card */
+        .texture {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 92%);
+            pointer-events: none;
+            opacity: 0.45;
+        }
+
         .card {
-            background: var(--card); border: 1px solid var(--border);
-            padding: 32px 24px; border-radius: 24px;
-            width: 100%; max-width: 420px; text-align: center; position: relative; z-index: 1;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 24px 64px rgba(0,0,0,0.3), 0 0 0 1px var(--border);
-            animation: cardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+            width: 100%;
+            max-width: 460px;
             margin: 16px;
+            padding: 28px 22px;
+            border-radius: 28px;
+            background: var(--card);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+            position: relative;
+            z-index: 1;
+            animation: cardIn 0.45s ease both;
         }
-        @media (max-width: 480px) {
-            .card { border-radius: 20px; padding: 28px 20px; margin: 12px; }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(28px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes cardIn { from{opacity:0;transform:translateY(30px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
-        .theme-btn { position: absolute; top: 16px; right: 16px; cursor: pointer; border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 5px 9px; font-size: 14px; color: var(--text); transition: 0.2s; }
-        .theme-btn:hover { border-color: var(--primary); }
+        .theme-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 7px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+        }
 
-        /* Registration */
-        #registration-view h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; background: linear-gradient(135deg, var(--primary), #fd79a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        #registration-view p { color: var(--sub); font-size: 0.88rem; margin-bottom: 20px; }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--secondary);
+            box-shadow: 0 0 12px var(--secondary);
+        }
+
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            letter-spacing: -0.04em;
+        }
+
+        #registration-view h2 {
+            font-size: 2rem;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .intro-text {
+            color: var(--sub);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .helper-box {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 14px 14px 12px;
+            background: rgba(255,255,255,0.03);
+            margin-bottom: 16px;
+        }
+
+        .helper-box h3 {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .helper-box p {
+            color: var(--sub);
+            font-size: 0.84rem;
+            line-height: 1.55;
+        }
+
+        .steps {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #1b140f;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+        }
+
+        .step p {
+            margin: 0;
+            font-size: 0.82rem;
+        }
+
+        .step code {
+            font-family: Consolas, monospace;
+            background: rgba(255,255,255,0.06);
+            padding: 2px 6px;
+            border-radius: 8px;
+            color: var(--text);
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .mini-link {
+            flex: 1;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
         input {
-            width: 100%; padding: 13px 16px; border-radius: 10px;
-            border: 1px solid var(--border); background: var(--bg);
-            color: var(--text); font-size: 15px; font-family: inherit;
-            margin-bottom: 12px; transition: 0.2s; outline: none;
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font-size: 15px;
+            font-family: inherit;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
         }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--glow); }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--glow);
+            transform: translateY(-1px);
+        }
 
         .btn {
-            background: linear-gradient(135deg, var(--primary), #6c5ce7);
-            color: white; border: none; padding: 16px; margin: 6px 0;
-            border-radius: 12px; cursor: pointer; width: 100%;
-            font-weight: 700; font-size: 16px; font-family: inherit;
-            transition: 0.25s; letter-spacing: 0.2px;
-            box-shadow: 0 4px 16px var(--glow);
-            min-height: 52px; touch-action: manipulation;
+            width: 100%;
+            min-height: 54px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 0.98rem;
+            letter-spacing: 0.01em;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            color: #1a120d;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            box-shadow: 0 10px 24px var(--glow);
         }
-        @media (hover: hover) { .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--glow); } }
-        .btn:active { transform: scale(0.97); opacity: 0.9; }
-        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--sub); box-shadow: none; font-size: 14px; padding: 12px; }
-        @media (hover: hover) { .btn-secondary:hover { border-color: var(--sub); color: var(--text); box-shadow: none; } }
 
-        /* Queue view */
-        #queue-view { animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: scale(0.98); }
 
-        .welcome { font-size: 0.88rem; color: var(--sub); margin-bottom: 2px; }
-        .token-display { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; margin: 4px 0 2px; }
-        .token-display span { color: var(--primary); }
-        .serving-line { font-size: 0.85rem; color: var(--sub); margin-bottom: 4px; }
-        .serving-line b { color: var(--text); }
+        .btn-secondary {
+            background: transparent;
+            color: var(--sub);
+            box-shadow: none;
+            border: 1px solid var(--border);
+        }
 
-        /* ETA ring */
-        .eta-wrap { position: relative; width: 130px; height: 130px; margin: 18px auto; }
+        .queue-header {
+            display: grid;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+
+        .welcome {
+            color: var(--sub);
+            font-size: 0.88rem;
+        }
+
+        .token-display {
+            font-size: 2.25rem;
+            font-weight: 800;
+        }
+
+        .token-display span,
+        .queue-highlight {
+            color: var(--primary);
+        }
+
+        .serving-line {
+            font-size: 0.84rem;
+            color: var(--sub);
+        }
+
+        .serving-line b {
+            color: var(--text);
+        }
+
+        .eta-wrap {
+            position: relative;
+            width: 136px;
+            height: 136px;
+            margin: 20px auto 18px;
+        }
+
         .eta-svg { transform: rotate(-90deg); }
         .eta-bg { fill: none; stroke: var(--border); stroke-width: 8; }
-        .eta-arc { fill: none; stroke: var(--primary); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease; filter: drop-shadow(0 0 6px var(--primary)); }
-        .eta-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .eta-val { font-size: 2rem; font-weight: 800; line-height: 1; }
-        .eta-unit { font-size: 0.65rem; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .eta-arc {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+            filter: drop-shadow(0 0 8px var(--primary));
+        }
 
-        /* AI section */
-        .ai-section { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 18px; }
-        .ai-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sub); margin-bottom: 10px; }
+        .eta-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .eta-val {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .eta-unit {
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.64rem;
+            color: var(--sub);
+            margin-top: 4px;
+        }
+
+        .whatsapp-guide {
+            margin-top: 16px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: linear-gradient(145deg, rgba(31, 111, 120, 0.16), rgba(255, 209, 102, 0.08));
+            text-align: left;
+        }
+
+        .whatsapp-guide h3 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.98rem;
+            margin-bottom: 8px;
+        }
+
+        .whatsapp-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+
+        .whatsapp-guide p {
+            color: var(--sub);
+            font-size: 0.82rem;
+            line-height: 1.55;
+            margin-bottom: 10px;
+        }
+
+        .whatsapp-details {
+            margin: 10px 0 12px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: rgba(255,255,255,0.04);
+            overflow: hidden;
+        }
+
+        .whatsapp-details summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .whatsapp-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .whatsapp-details summary::after {
+            content: "+";
+            font-size: 1.1rem;
+            color: var(--primary);
+            transition: transform 0.2s ease;
+        }
+
+        .whatsapp-details[open] summary::after {
+            content: "-";
+        }
+
+        .whatsapp-details-content {
+            padding: 0 16px 14px;
+        }
+
+        .sandbox-alert {
+            margin: 10px 0 12px;
+            padding: 12px 13px;
+            border-radius: 14px;
+            border: 1px solid rgba(37, 211, 102, 0.28);
+            background: rgba(37, 211, 102, 0.12);
+        }
+
+        .sandbox-alert strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text);
+            font-size: 0.82rem;
+        }
+
+        .sandbox-alert span {
+            color: var(--sub);
+            font-size: 0.79rem;
+            line-height: 1.55;
+            display: block;
+        }
+
+        .whatsapp-guide ul {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .whatsapp-guide li {
+            color: var(--text);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            padding-left: 14px;
+            position: relative;
+        }
+
+        .whatsapp-guide li::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            position: absolute;
+            left: 0;
+            top: 9px;
+        }
+
+        .whatsapp-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #25d366;
+            color: #041b0d;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+
+        .ai-section {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+        }
+
+        .ai-label {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
         #ai-text {
-            font-size: 14px; line-height: 1.6; color: var(--text);
-            min-height: 48px; margin-bottom: 14px;
-            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px 14px; text-align: left;
+            min-height: 54px;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            text-align: left;
+            margin-bottom: 14px;
         }
-        #ai-options { display: flex; flex-direction: column; gap: 0; }
 
-        /* Discount banner */
+        #ai-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .micro-copy {
+            font-size: 0.76rem;
+            color: var(--sub);
+            line-height: 1.55;
+            margin-top: 10px;
+        }
+
         #discount-banner {
-            display: none; margin-top: 14px;
-            background: linear-gradient(135deg, #f39c12, #e67e22);
-            color: white; border-radius: 12px; padding: 13px 16px;
-            font-weight: 600; font-size: 14px; line-height: 1.4;
-            animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            display: none;
+            margin-top: 14px;
+            background: linear-gradient(135deg, #f4a300, #f77f00);
+            color: #23180f;
+            border-radius: 16px;
+            padding: 13px 15px;
+            font-weight: 800;
+            font-size: 0.86rem;
+            line-height: 1.45;
         }
-        @keyframes popIn { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
 
-        /* Snake game */
-        #snake-view { animation: fadeIn 0.4s ease; }
-        .snake-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-right: 44px; }
-        .snake-header h3 { font-size: 1rem; font-weight: 700; }
-        .score-display { font-size: 0.82rem; color: var(--sub); }
-        .score-display span { color: var(--primary); font-weight: 700; font-size: 1rem; }
-        #snake-canvas { border: 2px solid var(--border); border-radius: 10px; display: block; margin: 0 auto; background: #0a0a0a; max-width: 100%; touch-action: none; }
-        .snake-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; max-width: 180px; margin-left: auto; margin-right: auto; }
-        .d-btn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 0; font-size: 18px; cursor: pointer; color: var(--text); transition: 0.15s; min-height: 52px; min-width: 52px; touch-action: manipulation; display: flex; align-items: center; justify-content: center; }
-        .d-btn:active { background: var(--primary); color: #0d1117; border-color: var(--primary); transform: scale(0.93); }
-        @media (hover: hover) { .d-btn:hover { background: var(--primary); color: #0d1117; border-color: var(--primary); } }
-        .snake-msg { font-size: 13px; color: var(--sub); margin-top: 8px; min-height: 18px; text-align: center; }
-        .threshold-bar-wrap { margin-top: 10px; }
-        .threshold-label { font-size: 0.7rem; color: var(--sub); display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .threshold-track { background: var(--border); height: 6px; border-radius: 3px; overflow: hidden; }
-        .threshold-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #fd79a8); border-radius: 3px; transition: width 0.3s; }
-        #goodbye-view { animation: fadeIn 0.5s ease; }
-        .confetti-emoji { font-size: 52px; animation: bounce 1s infinite alternate; display: block; margin-bottom: 10px; }
-        @keyframes bounce { from{transform:scale(1) rotate(-5deg)} to{transform:scale(1.15) rotate(5deg)} }
-        .goodbye-title { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), #fd79a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
-        .goodbye-msg { font-size: 15px; color: var(--text); line-height: 1.6; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+        #snake-view, #queue-view, #goodbye-view { animation: fadeIn 0.35s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .snake-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-right: 42px;
+        }
+
+        .snake-header h3 { font-size: 1.08rem; }
+        .score-display { color: var(--sub); font-size: 0.84rem; }
+        .score-display span { color: var(--primary); font-size: 1rem; font-weight: 800; }
+
+        #snake-canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: #0a0a0a;
+            touch-action: none;
+        }
+
+        .threshold-bar-wrap { margin-top: 12px; }
+        .threshold-label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--sub);
+            font-size: 0.72rem;
+            margin-bottom: 5px;
+        }
+        .threshold-track {
+            height: 7px;
+            border-radius: 999px;
+            background: var(--border);
+            overflow: hidden;
+        }
+        .threshold-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--accent), var(--primary));
+            transition: width 0.3s;
+        }
+
+        .snake-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            max-width: 180px;
+            margin: 12px auto 0;
+        }
+
+        .d-btn {
+            min-width: 52px;
+            min-height: 52px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .snake-msg {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--sub);
+            line-height: 1.5;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
+        .goodbye-title {
+            font-size: 1.7rem;
+            margin-bottom: 10px;
+        }
+
+        .goodbye-msg {
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            border-radius: 18px;
+            padding: 18px;
+            line-height: 1.65;
+        }
+
+        .confetti-emoji {
+            font-size: 52px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 480px) {
+            .card { padding: 24px 18px; border-radius: 24px; }
+            #registration-view h2 { font-size: 1.8rem; }
+            .top-actions { flex-direction: column; }
+            .whatsapp-guide h3 { flex-direction: column; align-items: flex-start; }
+        }
     </style>
 </head>
 <body>
-
-<!-- Animated background orbs (dark mode only) -->
-<div class="bg-orbs">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
-</div>
+<div class="texture"></div>
 
 <div class="card">
-    <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+    <button class="theme-btn" onclick="toggleTheme()">Theme</button>
 
-    <!-- 1. REGISTRATION -->
     <div id="registration-view">
-        <h2>SmartQ</h2>
-        <p>Enter the Queue ID and your name to join the line.</p>
+        <div class="eyebrow">Customer Check-In</div>
+        <h2>Join SmartQ in seconds</h2>
+        <p class="intro-text">Enter the queue ID from the admin screen, claim your token, and track your turn live from this page or through WhatsApp.</p>
+
+        <div class="top-actions">
+            <a class="mini-link" href="/">Project Home</a>
+            <a class="mini-link" href="/login">Admin Login</a>
+        </div>
+
+        <div class="helper-box">
+            <h3>Before you join</h3>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <p>Get the <strong>Queue ID</strong> from the admin counter or display.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <p>Enter your name below and tap <strong>Join the Queue</strong>.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <p>After you receive a token, you can message WhatsApp with <code>hi</code>, choose your queue, and send your token number to link updates.</p>
+                </div>
+            </div>
+        </div>
+
         <input type="text" id="queue-id-input" placeholder="Enter Queue ID from admin display..." autofocus>
         <input type="text" id="user-name" placeholder="Your name...">
         <div id="error-msg" style="color:var(--danger); font-size:0.85rem; margin-bottom:10px; min-height:20px; display:none;"></div>
-        <button class="btn" onclick="joinQueue()">Join the Queue →</button>
+        <button class="btn" onclick="joinQueue()">Join the Queue</button>
     </div>
 
-    <!-- 2. QUEUE VIEW -->
-    <div id="queue-view" style="display:none;">
-        <p class="welcome" id="welcome-msg">Welcome!</p>
-        <div class="token-display">Token <span id="my-token">--</span></div>
-        <p class="serving-line" style="font-size:0.78rem; margin-bottom:12px;">Queue ID: <b id="queue-id-display" style="color:var(--primary);">--</b></p>
-        <p class="serving-line">Now serving: <b id="current">--</b></p>
+    <div id="queue-view" class="hidden">
+        <div class="queue-header">
+            <p class="welcome" id="welcome-msg">Welcome!</p>
+            <div class="token-display">Token <span id="my-token">--</span></div>
+            <p class="serving-line">Queue ID: <b class="queue-highlight" id="queue-id-display">--</b></p>
+            <p class="serving-line">Now serving: <b id="current">--</b></p>
+        </div>
 
         <div class="eta-wrap">
-            <svg class="eta-svg" width="130" height="130" viewBox="0 0 130 130">
-                <circle class="eta-bg" cx="65" cy="65" r="54"/>
-                <circle class="eta-arc" id="eta-arc" cx="65" cy="65" r="54"
-                    stroke-dasharray="339.3" stroke-dashoffset="0"/>
+            <svg class="eta-svg" width="136" height="136" viewBox="0 0 136 136">
+                <circle class="eta-bg" cx="68" cy="68" r="56"></circle>
+                <circle class="eta-arc" id="eta-arc" cx="68" cy="68" r="56" stroke-dasharray="351.9" stroke-dashoffset="0"></circle>
             </svg>
             <div class="eta-center">
                 <span class="eta-val" id="eta">--</span>
@@ -192,22 +695,54 @@
         </div>
 
         <div class="ai-section">
-            <div class="ai-label">🤖 AI Assistant</div>
+            <div class="ai-label">AI assistant</div>
             <div id="ai-text">Initializing...</div>
             <div id="ai-options"></div>
-            <p style="font-size:12px; color:var(--sub); margin-top:8px; line-height:1.45;">
-                WhatsApp bot: send <b>link QUEUE_ID TOKEN</b>, then <b>status</b> or <b>ai your message</b>.
-            </p>
+            <p class="micro-copy">This assistant can calm waiting frustration, estimate timing, and suggest things to do while you wait.</p>
+        </div>
+
+        <div class="whatsapp-guide">
+            <h3>
+                <span>WhatsApp Queue Assistant</span>
+                {% if whatsapp_number %}
+                <span class="whatsapp-chip">Number: {{ whatsapp_number }}</span>
+                {% else %}
+                <span class="whatsapp-chip">Twilio linked</span>
+                {% endif %}
+            </h3>
+            <p>Use WhatsApp if you want updates without keeping this page open. The quick-action buttons stay below, and the full setup steps are tucked into the dropdown.</p>
+            <details class="whatsapp-details">
+                <summary>Show WhatsApp setup instructions</summary>
+                <div class="whatsapp-details-content">
+                    <div class="sandbox-alert">
+                        <strong>Important first-time setup</strong>
+                        <span>Before the chatbot will work, message <strong>join spider-heavy</strong> to <strong>+1 (415) 523-8886</strong> to connect your number to the Twilio sandbox.</span>
+                    </div>
+                    <ul>
+                        <li>First send <strong>join spider-heavy</strong> to <strong>+1 (415) 523-8886</strong> and wait for the sandbox confirmation.</li>
+                        <li>After that, send <strong>hi</strong> to the same WhatsApp number to start the chatbot.</li>
+                        <li>Reply with your <strong>queue number from the menu</strong> or type your queue ID <strong id="inline-queue-id">--</strong>.</li>
+                        <li>When asked, send your token number <strong id="inline-token">--</strong>.</li>
+                        <li>After linking, use <strong>status</strong> for ETA or <strong>ai How long will it take?</strong> for chat support.</li>
+                    </ul>
+                </div>
+            </details>
+            <a class="whatsapp-cta" id="sandbox-link" href="https://wa.me/14155238886?text=join%20spider-heavy" target="_blank" rel="noopener noreferrer">Connect WhatsApp sandbox with "join spider-heavy"</a>
+            <a class="whatsapp-cta" id="whatsapp-link" href="https://wa.me/14155238886?text=hi" target="_blank" rel="noopener noreferrer" style="margin-top:10px; background:#d8f8e5; color:#06311a;">After joining sandbox, open chat and send "hi"</a>
+            {% if whatsapp_number %}
+            <div class="micro-copy" style="margin-top:10px;">Configured SmartQ WhatsApp number: <strong>{{ whatsapp_number }}</strong></div>
+            {% else %}
+            <div class="micro-copy" style="margin-top:10px;">If the quick-open buttons do not open, manually message <strong>+1 (415) 523-8886</strong> with <strong>join spider-heavy</strong> first, then send <strong>hi</strong>.</div>
+            {% endif %}
         </div>
 
         <button class="btn btn-secondary" onclick="leaveQueue()" style="margin-top:14px;">Leave Queue</button>
         <div id="discount-banner"></div>
     </div>
 
-    <!-- 3. SNAKE GAME VIEW -->
-    <div id="snake-view" style="display:none;">
+    <div id="snake-view" class="hidden">
         <div class="snake-header">
-            <h3>🐍 Snake</h3>
+            <h3>Snake Mini Game</h3>
             <div class="score-display">Score: <span id="snake-score">0</span></div>
         </div>
         <canvas id="snake-canvas" width="280" height="280"></canvas>
@@ -221,14 +756,14 @@
             <button class="d-btn" onclick="snakeDir(0,1)">▼</button>
             <button class="d-btn" onclick="snakeDir(1,0)">▶</button>
         </div>
-        <p class="snake-msg" id="snake-msg">Use arrow keys or buttons · Score 200 for a discount!</p>
-        <button class="btn btn-secondary" onclick="exitSnake()" style="margin-top:12px;">← Back to Queue</button>
+        <p class="snake-msg" id="snake-msg">Use arrow keys or buttons. Score 200 for a discount.</p>
+        <button class="btn btn-secondary" onclick="exitSnake()" style="margin-top:12px;">Back to Queue</button>
     </div>
 
-    <!-- 4. GOODBYE -->
-    <div id="goodbye-view" style="display:none;">
+    <div id="goodbye-view" class="hidden">
         <span class="confetti-emoji">🎉</span>
-        <div class="goodbye-title">It's your turn!</div>
+        <div class="eyebrow">Queue Update</div>
+        <div class="goodbye-title">It is your turn</div>
         <div class="goodbye-msg" id="goodbye-text">Loading your message...</div>
     </div>
 </div>
@@ -240,22 +775,27 @@
     let goodbyeTriggered = false;
     let statusInterval;
     let shownDiscount = null;
-    let maxEta = null; // for ETA ring
+    let maxEta = null;
 
     window.onload = async () => {
         if (myToken && myName && myQueueId) {
             const res = await fetch(`/api/status?token=${myToken}&queue_id=${encodeURIComponent(myQueueId)}`);
             if (!res.ok) {
                 localStorage.clear();
-                myToken = null; myName = null; myQueueId = null;
+                myToken = null;
+                myName = null;
+                myQueueId = null;
                 return;
             }
             const data = await res.json();
-            if (parseInt(myToken) > 1 && data.last_token >= parseInt(myToken)) {
-                if (data.current > parseInt(myToken)) triggerGoodbye();
+            if (parseInt(myToken, 10) > 1 && data.last_token >= parseInt(myToken, 10)) {
+                if (data.current > parseInt(myToken, 10)) triggerGoodbye();
                 else showQueue();
             } else {
-                localStorage.clear(); myToken = null; myName = null; myQueueId = null;
+                localStorage.clear();
+                myToken = null;
+                myName = null;
+                myQueueId = null;
             }
         }
     };
@@ -269,52 +809,55 @@
         const queueIdInput = document.getElementById('queue-id-input');
         const nameInput = document.getElementById('user-name');
         const errorMsg = document.getElementById('error-msg');
-        
+
         if (!queueIdInput.value.trim()) {
-            errorMsg.textContent = 'Please enter the Queue ID';
+            errorMsg.textContent = 'Please enter the Queue ID.';
             errorMsg.style.display = 'block';
             return;
         }
-        
+
         if (!nameInput.value.trim()) {
-            errorMsg.textContent = 'Please enter your name';
+            errorMsg.textContent = 'Please enter your name.';
             errorMsg.style.display = 'block';
             return;
         }
-        
-        // Get the current queue ID from the server
+
         try {
             const enteredQueue = queueIdInput.value.trim().toUpperCase();
             const statusRes = await fetch(`/api/queue_exists?queue_id=${encodeURIComponent(enteredQueue)}`);
             const statusData = await statusRes.json();
-            
-            // Validate Queue ID
+
             if (!statusData.valid) {
-                errorMsg.textContent = '❌ Queue ID does not match. Please enter the correct Queue ID.';
+                errorMsg.textContent = 'Queue ID not found. Please check the code shown by the admin.';
                 errorMsg.style.display = 'block';
                 return;
             }
         } catch (e) {
-            errorMsg.textContent = 'Error validating Queue ID. Please try again.';
+            errorMsg.textContent = 'Unable to validate the Queue ID right now. Please try again.';
             errorMsg.style.display = 'block';
             return;
         }
-        
+
         const res = await fetch('/api/join', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 name: nameInput.value.trim(),
                 queue_id: queueIdInput.value.trim().toUpperCase()
             })
         });
+
         if (!res.ok) {
             const err = await res.json();
             errorMsg.textContent = err.error || 'Unable to join queue.';
             errorMsg.style.display = 'block';
             return;
         }
+
         const data = await res.json();
-        myToken = data.token; myName = data.name; myQueueId = data.queue_id;
+        myToken = data.token;
+        myName = data.name;
+        myQueueId = data.queue_id;
         localStorage.setItem('token', myToken);
         localStorage.setItem('userName', myName);
         localStorage.setItem('queueId', myQueueId);
@@ -326,15 +869,26 @@
         document.getElementById('queue-view').style.display = 'block';
         document.getElementById('my-token').innerText = '#' + myToken;
         document.getElementById('queue-id-display').innerText = myQueueId;
-        document.getElementById('welcome-msg').innerText = 'Hi, ' + myName + ' 👋';
+        document.getElementById('inline-queue-id').innerText = myQueueId;
+        document.getElementById('inline-token').innerText = '#' + myToken;
+        document.getElementById('welcome-msg').innerText = 'Hi, ' + myName + '. You are checked in.';
+        updateWhatsAppLink();
         updateStatus();
         interact('I just joined the queue.');
         statusInterval = setInterval(updateStatus, 3000);
     }
 
+    function updateWhatsAppLink() {
+        const link = document.getElementById('whatsapp-link');
+        if (!link) return;
+        const encodedMessage = encodeURIComponent('hi');
+        link.href = link.href.split('?')[0] + `?text=${encodedMessage}`;
+    }
+
     function leaveQueue() {
-        if (confirm('Are you sure? You will lose your spot!')) {
-            localStorage.clear(); location.reload();
+        if (confirm('Leave the queue? You will lose your current spot.')) {
+            localStorage.clear();
+            location.reload();
         }
     }
 
@@ -343,14 +897,18 @@
         const el = document.getElementById('ai-text');
         el.innerHTML = '';
         const timer = setInterval(() => {
-            if (i < text.length) { el.innerHTML += text.charAt(i); i++; }
-            else clearInterval(timer);
-        }, 22);
+            if (i < text.length) {
+                el.innerHTML += text.charAt(i);
+                i++;
+            } else {
+                clearInterval(timer);
+            }
+        }, 20);
     }
 
     function updateEtaRing(eta) {
         const arc = document.getElementById('eta-arc');
-        const circumference = 339.3;
+        const circumference = 351.9;
         if (maxEta === null || eta > maxEta) maxEta = eta;
         const progress = maxEta > 0 ? eta / maxEta : 0;
         arc.style.strokeDashoffset = circumference * (1 - progress);
@@ -369,6 +927,7 @@
                 location.reload();
                 return;
             }
+
             const data = await res.json();
             document.getElementById('current').innerText = data.current;
             document.getElementById('eta').innerText = data.eta;
@@ -377,15 +936,17 @@
             if (data.discount && data.discount !== shownDiscount) {
                 shownDiscount = data.discount;
                 const banner = document.getElementById('discount-banner');
-                banner.innerHTML = `🎉 ${data.discount}% discount has been applied to your overall order!`;
+                banner.innerHTML = `🎉 ${data.discount}% discount has been applied to your order.`;
                 banner.style.display = 'block';
             }
 
-            if (!goodbyeTriggered && data.current >= parseInt(myToken)) {
+            if (!goodbyeTriggered && data.current >= parseInt(myToken, 10)) {
                 clearInterval(statusInterval);
                 triggerGoodbye();
             }
-        } catch (e) { console.log('Update failed'); }
+        } catch (e) {
+            console.log('Update failed');
+        }
     }
 
     async function triggerGoodbye() {
@@ -395,13 +956,14 @@
         document.getElementById('goodbye-view').style.display = 'block';
         try {
             const res = await fetch('/api/goodbye', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ token: myToken, queue_id: myQueueId })
             });
             const data = await res.json();
             document.getElementById('goodbye-text').innerText = data.text;
         } catch (e) {
-            document.getElementById('goodbye-text').innerText = "You made it! Go get 'em!";
+            document.getElementById('goodbye-text').innerText = 'Your turn has arrived. Please proceed to the counter.';
         }
     }
 
@@ -409,7 +971,8 @@
         document.getElementById('ai-options').innerHTML = '<em style="color:var(--sub);font-size:13px">AI is thinking...</em>';
         try {
             const res = await fetch('/api/interact', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ choice, token: myToken, queue_id: myQueueId })
             });
             const data = await res.json();
@@ -417,22 +980,21 @@
             const container = document.getElementById('ai-options');
             container.innerHTML = '';
 
-            // Offer snake when satisfaction suggests user needs engagement.
             if ((data.satisfaction_score || 7) <= 6) {
                 const snakeBtn = document.createElement('button');
                 snakeBtn.className = 'btn';
-                snakeBtn.textContent = '🐍 Play Snake while you wait';
-                snakeBtn.style.cssText = 'font-size:13px;padding:10px;margin:4px 0;background:linear-gradient(135deg,#00b894,#00cec9);';
+                snakeBtn.textContent = 'Play Snake while you wait';
+                snakeBtn.style.cssText = 'font-size:13px;padding:10px;background:linear-gradient(135deg,var(--secondary),var(--accent));';
                 snakeBtn.onclick = launchSnake;
                 container.appendChild(snakeBtn);
             }
 
             const options = Array.isArray(data.options) ? data.options : ['Play Snake', 'Check ETA', 'Any updates?'];
-            options.forEach(opt => {
+            options.forEach((opt) => {
                 const btn = document.createElement('button');
                 btn.className = 'btn';
                 btn.textContent = opt;
-                btn.style.cssText = 'font-size:13px;padding:10px;margin:4px 0;';
+                btn.style.cssText = 'font-size:13px;padding:10px;';
                 btn.onclick = () => interact(opt);
                 container.appendChild(btn);
             });
@@ -441,17 +1003,15 @@
         }
     }
 
-    // ===================== SNAKE GAME =====================
     const DISCOUNT_THRESHOLD = 200;
     let CELL, COLS, ROWS;
     let snake, dir, nextDir, food, snakeScore, snakeLoop, gameOver;
 
     function getCanvasSize() {
-        // Fit canvas to card width minus padding, capped at 320px
         const card = document.querySelector('.card');
         const available = Math.min(card.clientWidth - 40, 320);
-        // Round down to nearest multiple of 14 cells
-        COLS = 14; ROWS = 14;
+        COLS = 14;
+        ROWS = 14;
         CELL = Math.floor(available / COLS);
         return COLS * CELL;
     }
@@ -461,7 +1021,8 @@
         document.getElementById('snake-view').style.display = 'block';
         const size = getCanvasSize();
         const canvas = document.getElementById('snake-canvas');
-        canvas.width = size; canvas.height = size;
+        canvas.width = size;
+        canvas.height = size;
         initSnake();
         reportScore(0, true);
     }
@@ -474,11 +1035,13 @@
     }
 
     function initSnake() {
-        snake = [{x:7, y:7},{x:6,y:7},{x:5,y:7}];
-        dir = {x:1, y:0}; nextDir = {x:1, y:0};
-        snakeScore = 0; gameOver = false;
+        snake = [{x: 7, y: 7}, {x: 6, y: 7}, {x: 5, y: 7}];
+        dir = {x: 1, y: 0};
+        nextDir = {x: 1, y: 0};
+        snakeScore = 0;
+        gameOver = false;
         document.getElementById('snake-score').textContent = '0';
-        document.getElementById('snake-msg').textContent = 'Use arrow keys or buttons · Score 200 for a discount!';
+        document.getElementById('snake-msg').textContent = 'Use arrow keys or buttons. Score 200 for a discount.';
         updateThresholdBar(0);
         placeFood();
         clearInterval(snakeLoop);
@@ -488,13 +1051,13 @@
 
     function placeFood() {
         let pos;
-        do { pos = {x: Math.floor(Math.random()*COLS), y: Math.floor(Math.random()*ROWS)}; }
-        while (snake.some(s => s.x===pos.x && s.y===pos.y));
+        do {
+            pos = {x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS)};
+        } while (snake.some((s) => s.x === pos.x && s.y === pos.y));
         food = pos;
     }
 
     function snakeDir(dx, dy) {
-        // Prevent reversing
         if (dx !== 0 && dir.x !== 0) return;
         if (dy !== 0 && dir.y !== 0) return;
         nextDir = {x: dx, y: dy};
@@ -505,10 +1068,14 @@
         dir = nextDir;
         const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
 
-        // Wall collision
-        if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) { endSnake(); return; }
-        // Self collision
-        if (snake.some(s => s.x===head.x && s.y===head.y)) { endSnake(); return; }
+        if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+            endSnake();
+            return;
+        }
+        if (snake.some((s) => s.x === head.x && s.y === head.y)) {
+            endSnake();
+            return;
+        }
 
         snake.unshift(head);
         if (head.x === food.x && head.y === food.y) {
@@ -517,10 +1084,9 @@
             updateThresholdBar(snakeScore);
             reportScore(snakeScore, true);
             placeFood();
-            // Speed up slightly every 50 pts
             if (snakeScore % 50 === 0) {
                 clearInterval(snakeLoop);
-                const speed = Math.max(60, 130 - Math.floor(snakeScore/50)*10);
+                const speed = Math.max(60, 130 - Math.floor(snakeScore / 50) * 10);
                 snakeLoop = setInterval(stepSnake, speed);
             }
         } else {
@@ -535,13 +1101,12 @@
         reportScore(snakeScore, false);
         const msg = document.getElementById('snake-msg');
         if (snakeScore >= DISCOUNT_THRESHOLD) {
-            msg.innerHTML = '🎉 You scored ' + snakeScore + '! Discount unlocked — check below!';
+            msg.innerHTML = 'You scored ' + snakeScore + '. Discount unlocked.';
             msg.style.color = 'var(--primary)';
         } else {
-            msg.textContent = 'Game over! Score: ' + snakeScore + ' · Tap to restart';
+            msg.textContent = 'Game over. Score: ' + snakeScore + '. Tap to restart.';
             msg.style.color = 'var(--sub)';
         }
-        // Tap canvas to restart
         document.getElementById('snake-canvas').onclick = () => {
             document.getElementById('snake-canvas').onclick = null;
             initSnake();
@@ -555,43 +1120,40 @@
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Grid dots
         ctx.fillStyle = 'rgba(255,255,255,0.03)';
-        for (let x=0; x<COLS; x++) for (let y=0; y<ROWS; y++) {
-            ctx.fillRect(x*CELL+CELL/2-1, y*CELL+CELL/2-1, 2, 2);
+        for (let x = 0; x < COLS; x++) {
+            for (let y = 0; y < ROWS; y++) {
+                ctx.fillRect(x * CELL + CELL / 2 - 1, y * CELL + CELL / 2 - 1, 2, 2);
+            }
         }
 
-        // Food
-        ctx.fillStyle = '#fd79a8';
-        ctx.shadowColor = '#fd79a8'; ctx.shadowBlur = 10;
+        ctx.fillStyle = '#ff6b81';
+        ctx.shadowColor = '#ff6b81';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, CELL/2-2, 0, Math.PI*2);
+        ctx.arc(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, CELL / 2 - 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Snake
         snake.forEach((seg, i) => {
-            const ratio = 1 - i/snake.length;
-            ctx.fillStyle = isOver ? '#636e72' : `rgba(${57+ratio*100},${211-ratio*50},${83+ratio*100},${0.6+ratio*0.4})`;
-            ctx.shadowColor = i===0 ? 'var(--primary)' : 'transparent';
-            ctx.shadowBlur = i===0 ? 8 : 0;
-            const pad = i===0 ? 1 : 2;
+            const ratio = 1 - i / snake.length;
+            ctx.fillStyle = isOver ? '#636e72' : `rgba(${60 + ratio * 110}, ${135 + ratio * 70}, ${120 + ratio * 70}, ${0.6 + ratio * 0.35})`;
+            const pad = i === 0 ? 1 : 2;
             ctx.beginPath();
-            ctx.roundRect(seg.x*CELL+pad, seg.y*CELL+pad, CELL-pad*2, CELL-pad*2, 4);
+            ctx.roundRect(seg.x * CELL + pad, seg.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 4);
             ctx.fill();
         });
-        ctx.shadowBlur = 0;
 
         if (isOver) {
-            ctx.fillStyle = 'rgba(0,0,0,0.55)';
-            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = 'rgba(0,0,0,0.58)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 18px Inter, sans-serif';
+            ctx.font = 'bold 18px Space Grotesk, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 10);
-            ctx.font = '13px Inter, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.fillText('Tap to play again', canvas.width/2, canvas.height/2 + 14);
+            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 10);
+            ctx.font = '13px Manrope, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.fillText('Tap to play again', canvas.width / 2, canvas.height / 2 + 14);
         }
     }
 
@@ -604,38 +1166,40 @@
     async function reportScore(score, playing) {
         try {
             const res = await fetch('/api/game_score', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ token: myToken, score, playing, queue_id: myQueueId })
             });
             const data = await res.json();
-            // Check if discount was auto-applied
             if (score >= data.discount_threshold) {
-                shownDiscount = null; // force re-show on next status poll
+                shownDiscount = null;
             }
-        } catch(e) {}
+        } catch (e) {}
     }
 
-    // Keyboard controls
-    document.addEventListener('keydown', e => {
+    document.addEventListener('keydown', (e) => {
         if (document.getElementById('snake-view').style.display === 'none') return;
-        const map = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0] };
-        if (map[e.key]) { e.preventDefault(); snakeDir(...map[e.key]); }
+        const map = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+        if (map[e.key]) {
+            e.preventDefault();
+            snakeDir(...map[e.key]);
+        }
     });
 
-    // Swipe controls for mobile
-    let touchStartX = 0, touchStartY = 0;
-    document.addEventListener('touchstart', e => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
     }, { passive: true });
-    document.addEventListener('touchmove', e => {
+    document.addEventListener('touchmove', (e) => {
         if (document.getElementById('snake-view').style.display !== 'none') e.preventDefault();
     }, { passive: false });
-    document.addEventListener('touchend', e => {
+    document.addEventListener('touchend', (e) => {
         if (document.getElementById('snake-view').style.display === 'none') return;
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
-        if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return; // too short
+        if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
         if (Math.abs(dx) > Math.abs(dy)) snakeDir(dx > 0 ? 1 : -1, 0);
         else snakeDir(0, dy > 0 ? 1 : -1);
     }, { passive: true });

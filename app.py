@@ -41,6 +41,7 @@ ADMIN_SEED_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
 twilio_client = None
 queue_states = {}
 whatsapp_sessions = {}  # from_number -> conversational session state
+queue_notifications = {}  # queue_id -> {"warned": set(tokens), "called": set(tokens)}
 
 
 def get_db():
@@ -94,6 +95,7 @@ def load_queue_states():
     conn.close()
     for row in rows:
         queue_states[row["id"]] = make_queue_state(row["queue_id"])
+        queue_notifications[row["queue_id"]] = {"warned": set(), "called": set()}
 
 
 def get_admin_state(admin_id):
@@ -114,6 +116,12 @@ def find_state_by_queue_id(queue_id):
         if state["queue_id"] == queue_id:
             return admin_id, state
     return None, None
+
+
+def get_queue_notifications(queue_id):
+    if queue_id not in queue_notifications:
+        queue_notifications[queue_id] = {"warned": set(), "called": set()}
+    return queue_notifications[queue_id]
 
 
 def parse_ai_json(raw_text, fallback_text):
@@ -160,17 +168,66 @@ def send_whatsapp_message(to_number, text):
         return False
 
 
+def linked_whatsapp_number_for_token(queue_id, token):
+    for from_number, link in whatsapp_sessions.items():
+        if (
+            link.get("queue_id") == queue_id
+            and int(link.get("token", 0)) == int(token)
+            and not link.get("stage")
+        ):
+            return from_number
+    return None
+
+
+def send_upcoming_turn_notifications(state):
+    queue_id = state["queue_id"]
+    notifications = get_queue_notifications(queue_id)
+    target_token = state["current_serving"] + 1
+
+    if str(target_token) not in state["users"]:
+        return
+    if target_token in notifications["warned"]:
+        return
+
+    from_number = linked_whatsapp_number_for_token(queue_id, target_token)
+    if not from_number:
+        return
+
+    name = state["users"].get(str(target_token), "there")
+    current_token = state["current_serving"]
+    text = (
+        f"Hi {name}, SmartQ update for queue {queue_id}: only 1 customer is ahead of you now. "
+        f"You are token #{target_token}, and token #{current_token} is currently being served. "
+        "Please stay ready for your turn."
+    )
+    if send_whatsapp_message(from_number, text):
+        notifications["warned"].add(target_token)
+
+
 def notify_turn(state):
+    queue_id = state["queue_id"]
     token = state["current_serving"]
+    notifications = get_queue_notifications(queue_id)
     for from_number, link in list(whatsapp_sessions.items()):
-        if link.get("queue_id") == state["queue_id"] and int(link.get("token", 0)) == token:
+        if link.get("queue_id") == queue_id and int(link.get("token", 0)) == token:
+            if token in notifications["called"]:
+                del whatsapp_sessions[from_number]
+                continue
             name = state["users"].get(str(token), "there")
-            send_whatsapp_message(
+            current_token = state["current_serving"]
+            sent = send_whatsapp_message(
                 from_number,
-                f"It is your turn now, {name}. Please proceed to the counter. Your WhatsApp session is now closed."
+                (
+                    f"It is your turn now, {name}. "
+                    f"Queue ID: {queue_id}. Token: #{current_token}. "
+                    "Please proceed to the counter now. Your SmartQ WhatsApp session will close after this alert."
+                )
             )
-            # Auto-close local chat linkage once the customer is called.
-            del whatsapp_sessions[from_number]
+            if sent:
+                notifications["called"].add(token)
+                # Auto-close local chat linkage once the customer is called.
+                del whatsapp_sessions[from_number]
+    send_upcoming_turn_notifications(state)
 
 
 def get_goodbye_message(name):
@@ -254,7 +311,18 @@ load_queue_states()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('landing.html')
+
+
+@app.route('/customer')
+def customer():
+    whatsapp_number = TWILIO_WHATSAPP_NUMBER.replace('whatsapp:', '').strip()
+    return render_template('index.html', whatsapp_number=whatsapp_number)
+
+
+@app.route('/landing')
+def landing():
+    return render_template('landing.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -307,6 +375,7 @@ def add_admin_password():
     conn.close()
 
     queue_states[new_id] = make_queue_state(queue_id)
+    queue_notifications[queue_id] = {"warned": set(), "called": set()}
     return jsonify({"success": True, "queue_id": queue_id})
 
 
@@ -406,7 +475,8 @@ def queue_list():
             "eta": eta,
             "is_current": t == state["current_serving"],
             "game": state["game_scores"].get(token_str),
-            "queue_id": state["queue_id"]
+            "queue_id": state["queue_id"],
+            "whatsapp_linked": linked_whatsapp_number_for_token(state["queue_id"], t) is not None
         })
     members.sort(key=lambda x: x["token"])
     return jsonify({"members": members, "queue_id": state["queue_id"]})
@@ -427,6 +497,8 @@ def refresh_queue_id():
     conn.close()
 
     queue_states[admin_id] = make_queue_state(new_queue_id)
+    queue_notifications.pop(old_queue_id, None)
+    queue_notifications[new_queue_id] = {"warned": set(), "called": set()}
 
     for number, link in list(whatsapp_sessions.items()):
         if link.get("queue_id") == old_queue_id:
@@ -594,6 +666,7 @@ def twilio_whatsapp():
             response.message("Invalid queue id or token.")
             return twiml_reply()
         whatsapp_sessions[from_number] = {"queue_id": queue_id, "token": int(token)}
+        send_upcoming_turn_notifications(state)
         name = state["users"].get(token, "there")
         response.message(
             f"Linked successfully. Welcome, {name}! Send 'status' for queue position or 'ai <message>' to chat."
@@ -644,6 +717,7 @@ def twilio_whatsapp():
             return twiml_reply()
 
         whatsapp_sessions[from_number] = {"queue_id": queue_id, "token": token}
+        send_upcoming_turn_notifications(state)
         name = state["users"].get(str(token), "there")
         response.message(
             f"Linked successfully. Welcome, {name}! Send 'status' for queue position or 'ai <message>' to chat."

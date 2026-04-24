@@ -159,6 +159,9 @@
         .game-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: rgba(162,155,254,0.15); color: #a29bfe; }
         .game-badge.playing { animation: pulse-game 1.2s infinite; }
         @keyframes pulse-game { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .wa-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
+        .wa-badge.linked { background: rgba(37,211,102,0.16); color: #2fbf71; }
+        .wa-badge.not-linked { background: rgba(255,255,255,0.08); color: var(--sub); }
 
         /* Empty queue celebration */
         .empty-state { padding: 40px 20px; text-align: center; }
@@ -291,12 +294,13 @@
                     <th>Name</th>
                     <th>Satisfaction</th>
                     <th>Game</th>
+                    <th>WhatsApp</th>
                     <th>ETA</th>
                     <th>Adjust</th>
                 </tr>
             </thead>
             <tbody id="queue-tbody">
-                <tr><td colspan="5" id="empty-msg">No one in queue yet.</td></tr>
+                <tr><td colspan="7" id="empty-msg">No one in queue yet.</td></tr>
             </tbody>
         </table>
         </div>
@@ -323,7 +327,7 @@
     </div>
 
     <div class="nav-links">
-        <a href="/">View Customer Page</a>
+        <a href="/customer">View Customer Page</a>
         <a href="/logout" style="color:var(--danger)">Logout</a>
     </div>
 </div>
@@ -336,7 +340,7 @@
     }
 
     // --- QR CODE ---
-    const customerUrl = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
+    const customerUrl = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port + '/customer';
     document.getElementById('qr-url-text').textContent = customerUrl;
     new QRCode(document.getElementById('qr-code'), {
         text: customerUrl,
@@ -532,7 +536,7 @@
                 hadPeople = false;
                 showEmptyCelebration(tbody);
             } else if (!tbody.querySelector('.empty-state')) {
-                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+                tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
                     <span class="empty-icon">🕐</span>
                     <div class="empty-title">No one in queue</div>
                     <div class="empty-sub">Waiting for customers to join...</div>
@@ -578,6 +582,10 @@
             const badgeClass = m.satisfaction > 7 ? 'high' : m.satisfaction > 4 ? 'mid' : 'low';
             const satisfactionLabel = m.satisfaction > 7 ? '😡 ' + m.satisfaction : m.satisfaction > 4 ? '😤 ' + m.satisfaction : '😊 ' + m.satisfaction;
 
+            const whatsappBadge = m.whatsapp_linked
+                ? '<span class="wa-badge linked">Linked</span>'
+                : '<span class="wa-badge not-linked">Not linked</span>';
+
             // Check if discount already sent
             const existingBtn = tr.querySelector('.discount-row-btn');
             const alreadySent = existingBtn && existingBtn.classList.contains('sent');
@@ -592,6 +600,7 @@
                 <td style="font-weight:500">${m.name}</td>
                 <td><span class="rage-badge ${badgeClass}">${satisfactionLabel}</span>${discountHtml}</td>
                 <td>${m.game ? `<span class="game-badge ${m.game.playing ? 'playing' : ''}">${m.game.playing ? '🎮' : '🏆'} ${m.game.score}</span>` : '<span style="color:var(--sub);font-size:0.75rem">—</span>'}</td>
+                <td>${whatsappBadge}</td>
                 <td class="eta-cell">${m.eta} min</td>
                 <td>
                     <div class="eta-controls">
@@ -690,7 +699,7 @@
             const color = colors[i % colors.length];
             particles += `<div class="particle" style="left:${left}%;background:${color};animation-delay:${delay}s"></div>`;
         }
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
             <div class="empty-particles">${particles}</div>
             <span class="empty-icon">🎉</span>
             <div class="empty-title">Queue cleared!</div>
